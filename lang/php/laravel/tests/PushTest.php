@@ -37,6 +37,11 @@ final class PushTest extends TestCase
                 return redirect('/admin/job-postings');
             })->dataLayer('admin.job-posting', 'complete');
             Route::get('admin/job-postings', fn () => view('page'));
+            // Unnamed routes in a named group get the group prefix as name
+            Route::name('admin.')->group(function () {
+                Route::post('admin/a/confirm', fn () => redirect('/'))->dataLayer('admin.a', 'complete');
+                Route::post('admin/b/confirm', fn () => redirect('/'))->dataLayer('admin.b', 'complete');
+            });
             // A route middleware that redirects before the action (like a password confirmation)
             Route::put('admin/guarded', fn () => redirect('/admin/job-postings'))
                 ->middleware(Support\RedirectFirst::class)
@@ -193,5 +198,6 @@ final class PushTest extends TestCase
         $this->assertSame(['input', 'confirm', 'error'], $catalog->form('front.entry')->stepNames());
         $this->assertSame(['input', 'complete', 'error'], $catalog->form('admin.job-posting')->stepNames());
         $this->assertSame('complete', $catalog->page('PUT admin/job-postings/{id}')?->step);
+        $this->assertSame(['admin.a', 'admin.b'], [$catalog->page('POST admin/a/confirm')?->form, $catalog->page('POST admin/b/confirm')?->form]);
     }
 }

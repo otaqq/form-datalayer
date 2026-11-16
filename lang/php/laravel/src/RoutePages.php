@@ -48,13 +48,18 @@ final class RoutePages
     }
 
     /**
-     * The page id of a route: its name, or its method, domain and URI.
+     * The page id of a route: its name, or its method, domain and URI. A name that is only the prefix of a
+     * named group (`admin.`, ending with a dot) is no name.
      */
     public static function id(Route $route): string
     {
+        $name = $route->getName();
+        if ($name !== null && $name !== '' && ! str_ends_with($name, '.')) {
+            return $name;
+        }
         $domain = $route->getDomain();
 
-        return $route->getName() ?? $route->methods()[0].' '.($domain === null || $domain === '' ? '' : $domain.'/').$route->uri();
+        return $route->methods()[0].' '.($domain === null || $domain === '' ? '' : $domain.'/').$route->uri();
     }
 
     /**

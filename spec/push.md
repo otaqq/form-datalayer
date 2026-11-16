@@ -24,7 +24,7 @@ Route::get('prefectures/{id}/edit', …)->dataLayer('admin.prefecture', 'input',
 Route::post('prefectures/confirm', …)->dataLayer('admin.prefecture', 'complete');
 ```
 
-The page id of a route is its name, or its method, domain and URI when it has none.
+The page id of a route is its name, or its method, domain and URI when it has none (Laravel: a name that is only a group prefix, ending with `.`, is none).
 
 A route marked `complete` handles the final submit. When its own action answers with a redirect (a redirect from a route middleware, such as a password confirmation, does not count) and has not flashed a failure (validation errors, or the flash keys the app lists as failures), the adapter pushes `complete` on the next page, with the context the request gave (`with()`) and the mode the app set for it, if any (Laravel: `FormDatalayer::mode('edit')`). The app writes nothing else for the step. A route marked `complete` that answers with a page (no redirect) pushes `complete` on that page.
 
