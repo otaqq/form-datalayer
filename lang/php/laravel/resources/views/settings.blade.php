@@ -54,6 +54,19 @@ th, td { border-top: 1px solid #eee; padding: .4rem; text-align: left; vertical-
     <input type="hidden" name="version" value="{{ $version }}">
     {{-- Form keys have dots, so old input is read as an array, not with dot notation --}}
     @php($old = old('forms'))
+    @php($oldContainers = old('containers'))
+
+    @if ($containers !== [])
+        <fieldset data-test="containers">
+            <legend>Google Tag Manager containers</legend>
+            <p class="note">Empty: no tag and no pushes on those pages.</p>
+            @foreach ($containers as $container)
+                <label>{{ $container['label'] }} <span class="note">{{ $container['name'] }}</span>
+                    <input type="text" name="containers[{{ $container['name'] }}]" value="{{ is_array($oldContainers) ? ($oldContainers[$container['name']] ?? '') : $container['id'] }}" placeholder="GTM-XXXXXXX" pattern="GTM-[A-Z0-9]+">
+                </label><br>
+            @endforeach
+        </fieldset>
+    @endif
 
     @foreach ($forms as $form)
         @php($base = "forms[{$form['key']}]")

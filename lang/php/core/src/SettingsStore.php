@@ -18,10 +18,14 @@ use RuntimeException;
  */
 final class SettingsStore
 {
+    /**
+     * @param  list<string>  $containers  The container names the app declares
+     */
     public function __construct(
         private readonly string $path,
         private readonly Catalog $catalog,
         private readonly LoggerInterface $logger = new NullLogger,
+        private readonly array $containers = [],
     ) {}
 
     public function read(): Settings
@@ -34,11 +38,12 @@ final class SettingsStore
      *
      * @param  array<string, mixed>  $forms  Form key → form settings, as in the file
      * @param  int  $version  The version the screen was opened with
+     * @param  array<string, string>  $containers  Container name → GTM container id ('' for none)
      *
      * @throws SettingsConflict when someone else saved first
      * @throws InvalidSettings when the settings fail the schema or name something the catalog does not have
      */
-    public function save(array $forms, int $version, string $by, ?DateTimeInterface $now = null): Settings
+    public function save(array $forms, int $version, string $by, ?DateTimeInterface $now = null, array $containers = []): Settings
     {
         $dir = dirname($this->path);
         if (! is_dir($dir) && ! @mkdir($dir, 0775, true) && ! is_dir($dir)) {
@@ -62,9 +67,13 @@ final class SettingsStore
                 'version' => $version + 1,
                 'updated_at' => ($now ?? new DateTimeImmutable)->format(DATE_ATOM),
                 'updated_by' => $by,
+                'containers' => $containers,
                 'forms' => $forms,
             ];
-            $errors = [...Settings::validate($data), ...$this->catalogErrors($forms)];
+            if ($containers === []) {
+                unset($data['containers']);
+            }
+            $errors = [...Settings::validate($data), ...$this->catalogErrors($forms, $containers)];
             if ($errors !== []) {
                 throw new InvalidSettings($errors);
             }
@@ -90,11 +99,11 @@ final class SettingsStore
      * @param  array<mixed>  $forms
      * @return list<string>
      */
-    private function catalogErrors(array $forms): array
+    private function catalogErrors(array $forms, array $containers): array
     {
-        $settings = Settings::fromArray(['version' => 0, 'forms' => $forms]);
+        $settings = Settings::fromArray(['version' => 0, 'containers' => $containers, 'forms' => $forms]);
 
-        return $settings->isBroken() ? [] : $settings->stale($this->catalog);
+        return $settings->isBroken() ? [] : $settings->stale($this->catalog, $this->containers);
     }
 
     /**

@@ -24,9 +24,10 @@ final class SettingsController
     public function edit(): View
     {
         $settings = $this->store->read();
-        $screen = new Screen($this->datalayer->catalog(), $settings);
+        $screen = new Screen($this->datalayer->catalog(), $settings, $this->datalayer->containers());
 
         return view('form-datalayer::settings', [
+            'containers' => $screen->containers(),
             'forms' => $screen->forms(),
             'removed' => $screen->removed(),
             'version' => $settings->version,
@@ -40,13 +41,14 @@ final class SettingsController
     public function update(Request $request): RedirectResponse
     {
         $settings = $this->store->read();
-        $screen = new Screen($this->datalayer->catalog(), $settings);
+        $screen = new Screen($this->datalayer->catalog(), $settings, $this->datalayer->containers());
         $forms = $screen->toSave((array) $request->input('forms', []));
+        $containers = $screen->containersToSave((array) $request->input('containers', []));
         $attribute = (string) $this->config->get('form-datalayer.screen.user_name', 'email');
         $by = (string) ($request->user()?->{$attribute} ?? $request->user()?->getAuthIdentifier() ?? '');
 
         try {
-            $this->store->save($forms, (int) $request->input('version'), $by);
+            $this->store->save($forms, (int) $request->input('version'), $by, containers: $containers);
         } catch (SettingsConflict) {
             return back()->withInput($request->except('version'))->with('form-datalayer.conflict', true);
         } catch (InvalidSettings $e) {

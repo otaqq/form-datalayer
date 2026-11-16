@@ -18,12 +18,16 @@ final class Settings
     /**
      * @param  array<string, array{enabled?: bool, steps?: array<string, array{event?: string|null, params?: array<string, bool>}>}>  $forms
      */
+    /**
+     * @param  array<string, string>  $containers  Container name → GTM container id ('' for none)
+     */
     private function __construct(
         public readonly int $version,
         private readonly array $forms,
         public readonly ?string $updatedAt = null,
         public readonly ?string $updatedBy = null,
         public readonly ?string $broken = null,
+        private readonly array $containers = [],
     ) {}
 
     /**
@@ -73,7 +77,7 @@ final class Settings
             return self::broken(implode('; ', $errors));
         }
 
-        return new self($data['version'], $data['forms'] ?? [], $data['updated_at'] ?? null, $data['updated_by'] ?? null);
+        return new self($data['version'], $data['forms'] ?? [], $data['updated_at'] ?? null, $data['updated_by'] ?? null, containers: $data['containers'] ?? []);
     }
 
     /**
@@ -85,13 +89,23 @@ final class Settings
     public static function validate(array $data): array
     {
         $errors = [];
-        self::fields($data, ['version', 'updated_at', 'updated_by', 'forms'], 'settings', $errors);
+        self::fields($data, ['version', 'updated_at', 'updated_by', 'containers', 'forms'], 'settings', $errors);
         if (! is_int($data['version'] ?? null) || $data['version'] < 0) {
             $errors[] = 'version must be a whole number, 0 or more';
         }
         foreach (['updated_at', 'updated_by'] as $field) {
             if (array_key_exists($field, $data) && ! is_string($data[$field])) {
                 $errors[] = "{$field} must be a string";
+            }
+        }
+        $containers = $data['containers'] ?? [];
+        if (! self::isMap($containers)) {
+            $errors[] = 'containers must be an object';
+        } else {
+            foreach ($containers as $name => $id) {
+                if (! Names::isContainerName((string) $name) || ! is_string($id) || ($id !== '' && ! Output::isContainerId($id))) {
+                    $errors[] = "containers.{$name} must be a GTM container id (GTM-…) or empty";
+                }
             }
         }
         $forms = $data['forms'] ?? [];
@@ -162,6 +176,15 @@ final class Settings
     }
 
     /**
+     * The container id saved for a container name: a GTM id, '' for none, or null when not saved
+     * (the app's default then applies).
+     */
+    public function container(string $name): ?string
+    {
+        return $this->containers[$name] ?? null;
+    }
+
+    /**
      * Whether the settings measure the form (true unless turned off).
      */
     public function formEnabled(string $form): bool
@@ -200,11 +223,17 @@ final class Settings
     /**
      * The names in the settings that the catalog no longer has (spec/settings.md#settings-and-the-catalog-over-time).
      *
-     * @return list<string>  `unknown form: <key>`, `unknown step: <key>.<step>`, `unknown param: <key>.<step>.<name>`
+     * @param  list<string>|null  $containers  The container names the app declares; null to skip containers
+     * @return list<string>  `unknown container: <name>`, `unknown form: <key>`, `unknown step: <key>.<step>`, `unknown param: <key>.<step>.<name>`
      */
-    public function stale(Catalog $catalog): array
+    public function stale(Catalog $catalog, ?array $containers = null): array
     {
         $stale = [];
+        foreach ($containers === null ? [] : array_keys($this->containers) as $name) {
+            if (! in_array($name, $containers, true)) {
+                $stale[] = "unknown container: {$name}";
+            }
+        }
         foreach ($this->forms as $key => $form) {
             if (! $catalog->has($key)) {
                 $stale[] = "unknown form: {$key}";
@@ -240,6 +269,7 @@ final class Settings
             'version' => $this->version,
             'updated_at' => $this->updatedAt,
             'updated_by' => $this->updatedBy,
+            'containers' => $this->containers === [] ? null : $this->containers,
             'forms' => $this->forms,
         ], fn ($value) => $value !== null);
     }

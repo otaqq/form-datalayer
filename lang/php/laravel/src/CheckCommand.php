@@ -20,7 +20,7 @@ final class CheckCommand extends Command
 
     protected $description = 'Check the form-datalayer catalog and settings';
 
-    public function handle(Config $config): int
+    public function handle(Config $config, FormDatalayer $datalayer): int
     {
         try {
             $catalog = Catalog::fromFile((string) $config->get('form-datalayer.catalog'));
@@ -36,7 +36,7 @@ final class CheckCommand extends Command
             return self::FAILURE;
         }
 
-        $removed = $settings->stale($catalog);
+        $removed = $settings->stale($catalog, array_keys($datalayer->containers()));
         $new = [];
         foreach ($catalog->forms() as $key => $form) {
             foreach ($form->stepNames() as $step) {

@@ -11,9 +11,10 @@ return [
     // The settings written from the settings screen. Outside git and the public directory, on storage that survives deploys.
     'settings' => env('FORM_DATALAYER_SETTINGS', storage_path('app/private/form-datalayer.json')),
 
-    // GTM containers by name, for @formDatalayerHead('front') and @formDatalayerBody('front'). Empty: no tag and no pushes.
+    // GTM containers by name, for @formDatalayerHead('default') and @formDatalayerBody('default').
+    // Their ids are entered on the settings screen; `default` is used until then (empty: no tag and no pushes).
     'containers' => [
-        'default' => env('FORM_DATALAYER_CONTAINER', ''),
+        'default' => ['label' => 'Site', 'default' => ''],
     ],
 
     // The data layer variable.

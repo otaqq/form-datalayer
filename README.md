@@ -7,7 +7,7 @@ Tag managers are easy to add and hard to keep honest. Events get hand-written in
 - **A catalog in git.** The app lists its forms and pages, the steps of each, and the only values each may send. Reviewed like code; checked against a JSON Schema.
 - **Every form, by default.** A form added to the catalog is measured from its first deploy, with an event name made from its key (`front.entry` → `front_entry_confirm`).
 - **Nothing sent unless allowed.** No request input reaches the page unless the catalog lists it. Ids can be turned into names (`prefecture_id` → `Tokyo`).
-- **Settings without a deploy.** Which forms are on, event names, and which parameters each step sends are chosen on an admin screen from the catalog — checkboxes, no free scripts — and saved to a JSON file outside the repository.
+- **Settings without a deploy.** The GTM container ids, which forms are on, event names, and which parameters each step sends are chosen on an admin screen — checkboxes from the catalog, no free scripts — and saved to a JSON file outside the repository.
 - **Safe to change over time.** Parameters removed from the catalog stop being sent; new ones wait to be chosen; stale settings never break a page.
 - **One spec, many languages.** The rules live in [spec/](spec) and are checked by shared data in [conformance/](conformance). PHP (with Laravel) comes first.
 
@@ -52,14 +52,23 @@ Write the catalog in `form-datalayer.json` at the root of the app ([spec/catalog
 }
 ```
 
-Put the tag in the layout, with a container from `config/form-datalayer.php` (`containers`, from the environment):
+Declare the containers in `config/form-datalayer.php`; their GTM ids are entered on the settings screen (the `default` id is used until then):
+
+```php
+'containers' => [
+    'front' => ['label' => 'Public site', 'default' => ''],
+    'admin' => ['label' => 'Admin', 'default' => ''],
+],
+```
+
+Put the tag in each layout, naming its container:
 
 ```blade
 <head>
-    @formDatalayerHead('default')
+    @formDatalayerHead('front')
 </head>
 <body>
-    @formDatalayerBody('default')
+    @formDatalayerBody('front')
 ```
 
 Pages listed in the catalog push their step by themselves; an input page that comes back with validation errors pushes `error`. Give them values, and push steps that have no page of their own:

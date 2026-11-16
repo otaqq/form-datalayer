@@ -158,6 +158,24 @@
   },
   "cases": [
     {
+      "name": "saved container ids do not change the push",
+      "settings": {
+        "version": 1,
+        "containers": {
+          "front": "GTM-ABC1",
+          "admin": ""
+        }
+      },
+      "form": "front.entry",
+      "step": "confirm",
+      "push": {
+        "event": "front_entry_confirm",
+        "form": "front.entry",
+        "step": "confirm",
+        "posting_code": "241116ab"
+      }
+    },
+    {
       "name": "defaults: default name and the default: true parameters only",
       "settings": null,
       "form": "front.entry",
@@ -460,6 +478,19 @@
               }
             }
           }
+        }
+      },
+      "form": "front.entry",
+      "step": "confirm",
+      "push": null,
+      "error": "broken settings"
+    },
+    {
+      "name": "a container id that is not a GTM id breaks the file",
+      "settings": {
+        "version": 1,
+        "containers": {
+          "front": "UA-123"
         }
       },
       "form": "front.entry",

@@ -2,14 +2,36 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/otaqq/form-datalayer/main/spec/schema/settings.schema.json",
   "title": "form-datalayer settings",
-  "description": "Which forms are measured, their event names and chosen parameters. Kept outside the repository and written from the settings screen. See spec/settings.md.",
+  "description": "Which forms are measured, their event names and chosen parameters, and the container ids. Kept outside the repository and written from the settings screen. See spec/settings.md.",
   "type": "object",
-  "required": ["version"],
+  "required": [
+    "version"
+  ],
   "additionalProperties": false,
   "properties": {
-    "version": {"type": "integer", "minimum": 0},
-    "updated_at": {"type": "string"},
-    "updated_by": {"type": "string"},
+    "version": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "updated_at": {
+      "type": "string"
+    },
+    "updated_by": {
+      "type": "string"
+    },
+    "containers": {
+      "type": "object",
+      "description": "Container name → GTM container id, or empty for none (spec/output.md)",
+      "propertyNames": {
+        "type": "string",
+        "maxLength": 40,
+        "pattern": "^[a-z][a-z0-9_-]*$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^(?:GTM-[A-Z0-9]+)?$"
+      }
+    },
     "forms": {
       "type": "object",
       "propertyNames": {
@@ -17,7 +39,9 @@
         "maxLength": 64,
         "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$"
       },
-      "additionalProperties": {"$ref": "#/$defs/form"}
+      "additionalProperties": {
+        "$ref": "#/$defs/form"
+      }
     }
   },
   "$defs": {
@@ -25,11 +49,23 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "enabled": {"type": "boolean"},
+        "enabled": {
+          "type": "boolean"
+        },
         "steps": {
           "type": "object",
-          "propertyNames": {"enum": ["input", "confirm", "complete", "error", "view"]},
-          "additionalProperties": {"$ref": "#/$defs/step"}
+          "propertyNames": {
+            "enum": [
+              "input",
+              "confirm",
+              "complete",
+              "error",
+              "view"
+            ]
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/step"
+          }
         }
       }
     },
@@ -38,10 +74,16 @@
       "additionalProperties": false,
       "properties": {
         "event": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "maxLength": 40,
           "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
-          "not": {"type": "string", "pattern": "^(?:google_|ga_|firebase_)"}
+          "not": {
+            "type": "string",
+            "pattern": "^(?:google_|ga_|firebase_)"
+          }
         },
         "params": {
           "type": "object",
@@ -50,7 +92,9 @@
             "maxLength": 40,
             "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
           },
-          "additionalProperties": {"type": "boolean"}
+          "additionalProperties": {
+            "type": "boolean"
+          }
         }
       }
     }

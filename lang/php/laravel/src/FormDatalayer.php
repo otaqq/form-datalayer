@@ -187,9 +187,38 @@ final class FormDatalayer
         return $this->arrived;
     }
 
+    /**
+     * The containers the app declares: name → label and default id (config `containers`).
+     *
+     * @return array<string, array{label: string, default: string}>
+     */
+    public function containers(): array
+    {
+        $containers = [];
+        foreach ((array) $this->config->get('form-datalayer.containers', []) as $name => $container) {
+            // A plain string is a default id (the v0.1 config)
+            $container = is_array($container) ? $container : ['default' => $container];
+            $containers[(string) $name] = [
+                'label' => (string) ($container['label'] ?? $name),
+                'default' => (string) ($container['default'] ?? ''),
+            ];
+        }
+
+        return $containers;
+    }
+
+    /**
+     * The id of a container: saved on the settings screen, or the config default.
+     */
     private function containerId(string $container): string
     {
-        $id = (string) $this->config->get("form-datalayer.containers.{$container}", '');
+        $containers = $this->containers();
+        if (! isset($containers[$container])) {
+            $this->logger->error("form-datalayer: the container {$container} is not in config form-datalayer.containers");
+
+            return '';
+        }
+        $id = $this->settings()->container($container) ?? $containers[$container]['default'];
         if ($id !== '' && ! Output::isContainerId($id)) {
             $this->logger->error("form-datalayer: invalid container id for {$container}");
 

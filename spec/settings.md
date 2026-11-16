@@ -1,6 +1,6 @@
 # Settings
 
-The settings choose, from the catalog, what is measured: which forms are on, the event name of each step, and which parameters each step sends. They are a JSON file **outside the repository**, like `.env` ([schema/settings.schema.json](schema/settings.schema.json)), written from the settings screen ([admin.md](admin.md)) so that changes need no deploy.
+The settings choose, from the catalog, what is measured: which forms are on, the event name of each step, and which parameters each step sends. They also hold the GTM container ids ([output.md](output.md#containers)). They are a JSON file **outside the repository**, like `.env` ([schema/settings.schema.json](schema/settings.schema.json)), written from the settings screen ([admin.md](admin.md)) so that changes need no deploy.
 
 The file holds data only. It is read with a JSON parser, never executed, and every name in it is checked against the catalog before anything reaches the page.
 
@@ -11,6 +11,7 @@ The file holds data only. It is read with a JSON parser, never executed, and eve
   "version": 3,
   "updated_at": "2026-11-16T10:00:00+09:00",
   "updated_by": "admin@example.com",
+  "containers": {"front": "GTM-ABC1234", "admin": ""},
   "forms": {
     "front.entry": {
       "steps": {
@@ -28,6 +29,7 @@ The file holds data only. It is read with a JSON parser, never executed, and eve
 |---|---|
 | `version` | A whole number, raised by 1 on every save ([optimistic lock](#saving)). `0` when the file does not exist |
 | `updated_at`, `updated_by` | When and by whom it was last saved (for people; not used by the rules) |
+| `containers` | Container name → GTM container id (`GTM-` and upper-case letters or digits), or `""` for none. Names are those the app declares ([output.md](output.md#containers)); containers left out use the app's default |
 | `forms` | Form key → form settings. Forms left out use the [defaults](#defaults) |
 
 Form settings:
@@ -57,19 +59,20 @@ The catalog changes with the code; the settings are not edited when it does. Rea
 
 | In the settings, but… | Then |
 |---|---|
+| the container is no longer declared by the app | It is not used (`unknown container`) |
 | the form is no longer in the catalog | It is skipped |
 | the step is no longer in the form | It is skipped |
 | the parameter is no longer in the form | It is not sent; the rest of the step is |
 | a parameter was added to the catalog | It is not mentioned, so it follows its `default`: sent only with `default: true` |
 
-Each skipped name is logged as a warning (`unknown form`, `unknown step`, `unknown param`), so a stale file shows up in the logs and in the check command ([admin.md](admin.md#check-command)). A renamed parameter is a removed one and a new one: choose it again.
+Each skipped name is logged as a warning (`unknown form`, `unknown step`, `unknown param`; `unknown container` by the check command and the screen), so a stale file shows up in the logs and in the check command ([admin.md](admin.md#check-command)). A renamed parameter is a removed one and a new one: choose it again.
 
 ## Broken files
 
 | The file… | Then |
 |---|---|
 | does not exist | Empty settings (`version: 0`): everything follows the defaults |
-| is not JSON, or fails the schema (a wrong type, an event name that breaks the rules) | **Nothing is pushed** and an error is logged. Pages still render |
+| is not JSON, or fails the schema (a wrong type, an event name or a container id that breaks the rules) | **Nothing is pushed** and an error is logged. Pages still render |
 
 Stale names are not broken files (see above): only a file that cannot be trusted stops every push.
 
@@ -85,6 +88,6 @@ A save replaces the whole file:
 
 1. Take an exclusive lock (`flock` on a lock file next to it).
 2. Read the current `version`. If it is not the version the screen was opened with, stop: someone else saved first. Show their settings and ask to save again.
-3. Check the new settings against the schema and the catalog. Names not in the catalog are rejected here (on save they are mistakes, not history).
+3. Check the new settings against the schema, the catalog and the declared containers. Names not in them are rejected here (on save they are mistakes, not history).
 4. Write `version + 1`, `updated_at` and `updated_by` with the settings to a temporary file in the same directory, then rename it over the file. Readers see the old file or the new one, never half of one.
 5. Release the lock, and log who saved, with the settings before and after.

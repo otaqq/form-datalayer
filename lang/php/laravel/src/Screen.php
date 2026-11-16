@@ -14,7 +14,41 @@ use Otaqq\FormDatalayer\Settings;
  */
 final class Screen
 {
-    public function __construct(private readonly Catalog $catalog, private readonly Settings $settings) {}
+    /**
+     * @param  array<string, array{label: string, default: string}>  $containers  The containers the app declares
+     */
+    public function __construct(private readonly Catalog $catalog, private readonly Settings $settings, private readonly array $containers = []) {}
+
+    /**
+     * The container ids as the screen shows them: saved, or the config default until saved.
+     *
+     * @return list<array{name: string, label: string, id: string}>
+     */
+    public function containers(): array
+    {
+        $rows = [];
+        foreach ($this->containers as $name => $container) {
+            $rows[] = ['name' => $name, 'label' => $container['label'], 'id' => $this->settings->container($name) ?? $container['default']];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * The container ids to save from the submitted screen: every declared container, '' for none.
+     *
+     * @param  array<mixed>  $input  `containers.<name>`
+     * @return array<string, string>
+     */
+    public function containersToSave(array $input): array
+    {
+        $ids = [];
+        foreach (array_keys($this->containers) as $name) {
+            $ids[$name] = is_string($input[$name] ?? null) ? trim($input[$name]) : '';
+        }
+
+        return $ids;
+    }
 
     /**
      * Every form of the catalog, with its steps and parameters as the screen shows them.
@@ -62,7 +96,7 @@ final class Screen
      */
     public function removed(): array
     {
-        return $this->settings->isBroken() ? [] : $this->settings->stale($this->catalog);
+        return $this->settings->isBroken() ? [] : $this->settings->stale($this->catalog, array_keys($this->containers));
     }
 
     /**

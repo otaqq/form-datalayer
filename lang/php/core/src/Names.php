@@ -36,6 +36,14 @@ final class Names
     }
 
     /**
+     * A container name the app declares (`front`, `admin`): lower-case ASCII letters, digits, `_` and `-`.
+     */
+    public static function isContainerName(mixed $name): bool
+    {
+        return is_string($name) && strlen($name) <= 40 && preg_match('/^[a-z][a-z0-9_-]*$/D', $name) === 1;
+    }
+
+    /**
      * The pattern of event and parameter names alone (no reserved prefixes): what a settings file may name.
      */
     public static function isName(mixed $name): bool

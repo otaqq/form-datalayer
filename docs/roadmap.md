@@ -13,6 +13,11 @@
 - [x] First user: an application with public and admin forms
 - [x] Tag v0.1.0
 
+## v0.2: container ids on the settings screen
+
+- [x] Settings: `containers` (name → GTM id), checked on read and save; the app declares the names, with a default id
+- [x] Settings screen: one field per container; removed containers listed; check command reports them
+
 ## Languages
 
 Each follows [spec/](../spec) and passes [conformance/](../conformance). Check that names are free before publishing.

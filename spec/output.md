@@ -2,17 +2,20 @@
 
 What goes into the page. v0.1 writes for Google Tag Manager; how the pushes are written is kept in one place so that other tools (Matomo Tag Manager's `_mtm`, `gtag('event', …)`) can be added later.
 
-## Settings of the app
+## Containers
 
-These come from the app's configuration (environment variables), not from the settings file:
+The app declares its containers by name (`front` for the public site, `admin` for the admin screen, or one `default`), each with a label and a default id. A page names the container it uses.
+
+The id of a container is the one saved on the settings screen ([settings.md](settings.md#fields)), or the app's default while none is saved. An id is `GTM-` and upper-case letters or digits.
+
+An empty container id writes nothing at all: no tag and no pushes. A container id that breaks the rules, or a container the app does not declare, also writes nothing, and logs an error.
+
+## Settings of the app
 
 | Setting | Meaning |
 |---|---|
-| container id | The GTM container of the page, `GTM-` and upper-case letters or digits. The app may use different containers for different parts (the public site and the admin screen) |
-| variable | The name of the data layer, `dataLayer` unless set. An ASCII JavaScript identifier |
+| variable | The name of the data layer, `dataLayer` unless set. An ASCII JavaScript identifier. A variable that breaks the rules writes nothing, and logs an error |
 | nonce | The CSP nonce of the page, when the app uses one. Added to every `<script>` |
-
-An empty container id writes nothing at all: no tag and no pushes. A container id or variable that breaks the rules also writes nothing, and logs an error.
 
 ## In `<head>`
 

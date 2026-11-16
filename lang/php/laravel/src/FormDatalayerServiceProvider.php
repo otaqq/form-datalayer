@@ -31,6 +31,7 @@ final class FormDatalayerServiceProvider extends ServiceProvider
             (string) $app['config']->get('form-datalayer.settings'),
             $app->make(FormDatalayer::class)->catalog(),
             $app['log'],
+            array_keys($app->make(FormDatalayer::class)->containers()),
         ));
     }
 
