@@ -11,7 +11,7 @@ Tag managers are easy to add and hard to keep honest. Events get hand-written in
 - **Safe to change over time.** Parameters removed from the catalog stop being sent; new ones wait to be chosen; stale settings never break a page.
 - **One spec, many languages.** The rules live in [spec/](spec) and are checked by shared data in [conformance/](conformance). PHP (with Laravel) comes first.
 
-> **Status:** v0.1 in progress: PHP and Laravel. See [docs/roadmap.md](docs/roadmap.md).
+> **Status:** v0.1: PHP and Laravel, in use in one application. Other languages are planned; see [docs/roadmap.md](docs/roadmap.md).
 
 ## Layout
 

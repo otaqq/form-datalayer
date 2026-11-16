@@ -10,14 +10,14 @@
 - [x] Laravel: config, steps from route names, `error` from validation errors, flash, Blade directives
 - [x] Laravel: lookups with the query builder, one query per table
 - [x] Laravel: settings screen (publishable views, Gate ability) and `form-datalayer:check`
-- [ ] First user: an application with public and admin forms
-- [ ] Tag v0.1.0
+- [x] First user: an application with public and admin forms
+- [x] Tag v0.1.0
 
 ## Languages
 
 Each follows [spec/](../spec) and passes [conformance/](../conformance). Check that names are free before publishing.
 
-- [ ] PHP: Composer `otaqq/form-datalayer` (with Laravel)
+- [x] PHP: Composer `otaqq/form-datalayer` (with Laravel)
 - [ ] Node.js, Ruby, Python, Go
 
 ## Later
