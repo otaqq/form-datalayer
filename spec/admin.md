@@ -20,7 +20,8 @@ What the screen shows against the saved settings ([settings.md](settings.md#sett
 | Mark | When | Checkbox |
 |---|---|---|
 | (none) | The parameter is saved as `true` or `false` | As saved |
-| **new** | The parameter is in the catalog but not in the saved step | Checked when `default: true` |
+| (none) | The step has not been saved yet | Checked when `default: true` |
+| **new** | The step was saved with its parameters, but not this one (added to the catalog since) | Checked when `default: true` |
 | **removed** | The saved settings name a form, step or parameter that is no longer in the catalog | Not shown as a checkbox; listed so that people see it went away. The next save drops it |
 
 Saving writes every form and step shown, and every parameter as `true` or `false`, then follows [settings.md](settings.md#saving). A save that loses to another one (the version changed) shows the other settings and keeps what was typed, to save again.
@@ -32,6 +33,6 @@ Reads the catalog and the settings and reports:
 - the catalog's problems (it is rejected),
 - whether the settings file is broken,
 - every removed form, step or parameter still in the settings,
-- every new parameter not in the saved settings.
+- every new parameter (as on the screen).
 
 It exits with a failure only for a rejected catalog or a broken settings file, so it can run after a deploy. Laravel: `php artisan form-datalayer:check`.

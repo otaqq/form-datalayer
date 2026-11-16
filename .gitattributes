@@ -1,0 +1,12 @@
+# Keep the Composer dist archive to the PHP sources
+/.github export-ignore
+/conformance export-ignore
+/docs export-ignore
+/spec export-ignore
+/lang/php/docker export-ignore
+/lang/php/core/tests export-ignore
+/lang/php/laravel/tests export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/mise.toml export-ignore
+/phpunit.xml export-ignore

@@ -46,7 +46,7 @@ A catalog whose default names are longer than 40 characters is rejected ([catalo
 
 ## Values
 
-The **context** is what the app passes for a push: a tree of maps, lists and plain values (strings, numbers, `true` / `false`, `null`). The framework adapter may add values of its own; Laravel adds `input` (the request input) and `user` (the attributes of the signed-in user the app lists). Values reach the page only through the parameters of the catalog.
+The **context** is what the app passes for a push: a tree of maps, lists and plain values (strings, numbers, `true` / `false`, `null`). The framework adapter may add values of its own; Laravel adds `input` (the request input) and `user` (the attributes of the signed-in user the app lists). Values the app passes win over those the adapter adds; maps are merged key by key, lists are replaced. Values reach the page only through the parameters of the catalog.
 
 A parameter's value is found in five steps:
 

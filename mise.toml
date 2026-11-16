@@ -1,0 +1,17 @@
+# PHP runs in a container so the host needs nothing but Docker
+[tasks."php:image"]
+run = "docker build -q -t form-datalayer-php lang/php/docker >/dev/null"
+
+[tasks.setup]
+description = "Install the Composer dependencies"
+depends = ["php:image"]
+run = "docker run --rm -u $(id -u):$(id -g) -v $PWD:/app form-datalayer-php composer install"
+
+[tasks.composer]
+depends = ["php:image"]
+run = "docker run --rm -u $(id -u):$(id -g) -v $PWD:/app form-datalayer-php composer"
+
+[tasks.test]
+description = "PHP tests (core and Laravel)"
+depends = ["php:image"]
+run = "docker run --rm -u $(id -u):$(id -g) -v $PWD:/app form-datalayer-php vendor/bin/phpunit"

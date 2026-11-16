@@ -96,7 +96,7 @@ A parameter name follows the GA4 rules: an ASCII letter, then letters, digits or
 
 An implementation rejects a catalog that fails the schema, and also one where:
 
-- the default event name of a step is longer than 40 characters ([push.md](push.md#event-names)),
+- the default event name of a step breaks the event name rules: longer than 40 characters, or starting with `google_`, `ga_` or `firebase_` ([push.md](push.md#event-names)),
 - the same page appears twice.
 
 A rejected catalog is a programming error: fail loudly (an exception at boot or in the test), never silently measure less.

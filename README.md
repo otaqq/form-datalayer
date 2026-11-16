@@ -11,7 +11,7 @@ Tag managers are easy to add and hard to keep honest. Events get hand-written in
 - **Safe to change over time.** Parameters removed from the catalog stop being sent; new ones wait to be chosen; stale settings never break a page.
 - **One spec, many languages.** The rules live in [spec/](spec) and are checked by shared data in [conformance/](conformance). PHP (with Laravel) comes first.
 
-> **Status:** designing v0.1. See [docs/roadmap.md](docs/roadmap.md).
+> **Status:** v0.1 in progress: PHP and Laravel. See [docs/roadmap.md](docs/roadmap.md).
 
 ## Layout
 
@@ -21,6 +21,63 @@ Tag managers are easy to add and hard to keep honest. Events get hand-written in
 | [conformance](conformance) | Shared inputs and expected results | — |
 | `lang/php/core` | Framework-independent PHP: catalog, settings, pushes, output | Composer `otaqq/form-datalayer` |
 | `lang/php/laravel` | Laravel: config, steps from route names, flash, Blade, settings screen, check command | Composer `otaqq/form-datalayer` |
+
+## Laravel
+
+```sh
+composer require otaqq/form-datalayer
+php artisan vendor:publish --tag=form-datalayer-config
+```
+
+Write the catalog in `form-datalayer.json` at the root of the app ([spec/catalog.md](spec/catalog.md)); pages are route names:
+
+```json
+{
+  "version": 1,
+  "forms": {
+    "front.entry": {
+      "label": "Job application",
+      "steps": {
+        "input": [{"page": "entries.create"}],
+        "confirm": [{"page": "entries.confirm"}],
+        "complete": [{"page": "entries.complete"}]
+      },
+      "params": {
+        "posting_code": {"label": "Posting code", "from": "posting.code", "default": true},
+        "prefectures": {"label": "Prefectures", "from": "posting.prefecture_ids.*",
+                        "lookup": {"table": "prefectures", "key": "id", "column": "name"}}
+      }
+    }
+  }
+}
+```
+
+Put the tag in the layout, with a container from `config/form-datalayer.php` (`containers`, from the environment):
+
+```blade
+<head>
+    @formDatalayerHead('default')
+</head>
+<body>
+    @formDatalayerBody('default')
+```
+
+Pages listed in the catalog push their step by themselves; an input page that comes back with validation errors pushes `error`. Give them values, and push steps that have no page of their own:
+
+```php
+use Otaqq\FormDatalayer\Laravel\Facades\FormDatalayer;
+
+FormDatalayer::with(['posting' => $posting]);                   // values for this page's push
+FormDatalayer::flash('admin.job-posting', 'complete', [], 'edit'); // on the next page, after a redirect
+```
+
+The settings screen is at `/form-datalayer` for users with the `form-datalayer.manage` ability, which the app defines:
+
+```php
+Gate::define('form-datalayer.manage', fn ($user) => in_array($user->role, ['system_admin', 'service_admin'], true));
+```
+
+The settings are saved to `storage/app/private/form-datalayer.json` (`FORM_DATALAYER_SETTINGS`): keep it on storage that survives deploys. Publish the view (`--tag=form-datalayer-views`) to put the screen in your layout. After a deploy, `php artisan form-datalayer:check` lists settings that name what the catalog no longer has, and parameters that are new.
 
 ## License
 

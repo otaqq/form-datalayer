@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "forms": {
+    "front.entry": {
+      "label": "Job application",
+      "steps": {
+        "input": [{"page": "front.entries.create"}],
+        "confirm": [{"page": "front.entries.confirm"}],
+        "complete": [{"page": "front.entries.complete"}]
+      },
+      "params": {
+        "posting_code": {"label": "Posting code", "from": "posting.code", "default": true},
+        "prefectures": {"label": "Prefectures", "from": "posting.prefecture_ids.*", "lookup": {"table": "prefectures", "key": "id", "column": "name"}, "default": true},
+        "desired": {"label": "Desired prefecture", "from": "input.desired_prefecture_id", "lookup": {"table": "prefectures", "key": "id", "column": "name"}}
+      }
+    },
+    "admin.job-posting": {
+      "label": "Job posting",
+      "steps": {
+        "input": [{"page": "admin.job-postings.edit", "mode": "edit"}],
+        "complete": []
+      },
+      "params": {
+        "role": {"label": "Role", "from": "user.role", "default": true}
+      }
+    },
+    "front.job-search": {
+      "label": "Job search",
+      "enabled": false,
+      "steps": {"view": [{"page": "front.jobs.index"}]}
+    }
+  }
+}

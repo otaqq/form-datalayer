@@ -10,7 +10,7 @@ What every implementation of form-datalayer does, whatever the language or the f
 | [output.md](output.md) | The tag and the push script in the page |
 | [admin.md](admin.md) | The settings screen and the check command |
 
-The two JSON Schemas are in [schema/](schema). [conformance/](../conformance) checks the rules with shared data.
+The two JSON Schemas are in [schema/](schema). Patterns match the whole value: a trailing newline does not pass (in PCRE, use `\z` or the `D` modifier, not a bare `$`). [conformance/](../conformance) checks the rules with shared data.
 
 ## Words
 

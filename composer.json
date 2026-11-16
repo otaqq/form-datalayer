@@ -1,0 +1,57 @@
+{
+    "name": "otaqq/form-datalayer",
+    "description": "Measure every form step (input, confirm, complete, error) with Google Tag Manager: a catalog in your code, settings chosen on an admin screen, and nothing sent unless allowed.",
+    "keywords": [
+        "google tag manager",
+        "gtm",
+        "datalayer",
+        "analytics",
+        "ga4",
+        "forms",
+        "laravel"
+    ],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "otaqq"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "psr/log": "^2.0|^3.0"
+    },
+    "require-dev": {
+        "illuminate/database": "^12.0|^13.0",
+        "illuminate/support": "^12.0|^13.0",
+        "orchestra/testbench": "^10.0|^11.0",
+        "phpunit/phpunit": "^11.5|^12.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Otaqq\\FormDatalayer\\": "lang/php/core/src/",
+            "Otaqq\\FormDatalayer\\Laravel\\": "lang/php/laravel/src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Otaqq\\FormDatalayer\\Tests\\": "lang/php/core/tests/",
+            "Otaqq\\FormDatalayer\\Laravel\\Tests\\": "lang/php/laravel/tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "suggest": {
+        "illuminate/support": "For the Laravel integration (^12.0|^13.0): config, steps from route names, Blade, the settings screen and a check command"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Otaqq\\FormDatalayer\\Laravel\\FormDatalayerServiceProvider"
+            ]
+        }
+    }
+}

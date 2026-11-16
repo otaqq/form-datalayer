@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         failOnWarning="true"
+         failOnRisky="true">
+    <testsuites>
+        <testsuite name="core">
+            <directory>lang/php/core/tests</directory>
+        </testsuite>
+        <testsuite name="laravel">
+            <directory>lang/php/laravel/tests</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>lang/php/core/src</directory>
+            <directory>lang/php/laravel/src</directory>
+        </include>
+    </source>
+</phpunit>

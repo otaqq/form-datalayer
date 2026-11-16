@@ -3,19 +3,43 @@
     {
       "name": "one push",
       "variable": "dataLayer",
-      "pushes": [{"event": "front_entry_confirm", "form": "front.entry", "step": "confirm"}],
+      "pushes": [
+        {
+          "event": "front_entry_confirm",
+          "form": "front.entry",
+          "step": "confirm"
+        }
+      ],
       "script": "window.dataLayer=window.dataLayer||[];window.dataLayer.push({\"event\":\"front_entry_confirm\",\"form\":\"front.entry\",\"step\":\"confirm\"});"
     },
     {
       "name": "several pushes in order, another variable",
       "variable": "_mtm",
-      "pushes": [{"event": "a"}, {"event": "b", "n": 1, "t": true, "l": [1, "x"]}],
+      "pushes": [
+        {
+          "event": "a"
+        },
+        {
+          "event": "b",
+          "n": 1,
+          "t": true,
+          "l": [
+            1,
+            "x"
+          ]
+        }
+      ],
       "script": "window._mtm=window._mtm||[];window._mtm.push({\"event\":\"a\"});window._mtm.push({\"event\":\"b\",\"n\":1,\"t\":true,\"l\":[1,\"x\"]});"
     },
     {
       "name": "characters that could end the script are escaped",
       "variable": "dataLayer",
-      "pushes": [{"event": "e", "title": "</script><b>'A&B'</b>\u2028\u2029東京"}],
+      "pushes": [
+        {
+          "event": "e",
+          "title": "</script><b>'A&B'</b>  東京"
+        }
+      ],
       "script": "window.dataLayer=window.dataLayer||[];window.dataLayer.push({\"event\":\"e\",\"title\":\"\\u003C/script\\u003E\\u003Cb\\u003E\\u0027A\\u0026B\\u0027\\u003C/b\\u003E\\u2028\\u2029東京\"});"
     },
     {
@@ -26,11 +50,32 @@
     }
   ],
   "container_ids": {
-    "valid": ["GTM-ABC123", "GTM-K9"],
-    "invalid": ["", "gtm-abc", "GTM-", "GTM-ABC'", "UA-12345"]
+    "valid": [
+      "GTM-ABC123",
+      "GTM-K9"
+    ],
+    "invalid": [
+      "",
+      "gtm-abc",
+      "GTM-",
+      "GTM-ABC'",
+      "UA-12345",
+      "GTM-ABC\n"
+    ]
   },
   "variables": {
-    "valid": ["dataLayer", "_mtm", "$dl"],
-    "invalid": ["", "data-layer", "1dl", "a.b", "dl;alert(1)"]
+    "valid": [
+      "dataLayer",
+      "_mtm",
+      "$dl"
+    ],
+    "invalid": [
+      "",
+      "data-layer",
+      "1dl",
+      "a.b",
+      "dl;alert(1)",
+      "dataLayer\n"
+    ]
   }
 }

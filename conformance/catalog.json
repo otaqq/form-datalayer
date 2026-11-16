@@ -2,78 +2,319 @@
   "cases": [
     {
       "name": "a form and a page",
-      "catalog": {"version": 1, "forms": {
-        "front.entry": {"label": "Entry", "steps": {"input": [{"page": "a"}], "confirm": [{"page": "b"}], "complete": []}},
-        "front.job-view": {"label": "Job", "steps": {"view": [{"page": "c"}]}}
-      }},
+      "catalog": {
+        "version": 1,
+        "forms": {
+          "front.entry": {
+            "label": "Entry",
+            "steps": {
+              "input": [
+                {
+                  "page": "a"
+                }
+              ],
+              "confirm": [
+                {
+                  "page": "b"
+                }
+              ],
+              "complete": []
+            }
+          },
+          "front.job-view": {
+            "label": "Job",
+            "steps": {
+              "view": [
+                {
+                  "page": "c"
+                }
+              ]
+            }
+          }
+        }
+      },
       "valid": true,
       "event_names": {
-        "front.entry": {"input": "front_entry_input", "confirm": "front_entry_confirm", "complete": "front_entry_complete", "error": "front_entry_error"},
-        "front.job-view": {"view": "front_job_view"}
+        "front.entry": {
+          "input": "front_entry_input",
+          "confirm": "front_entry_confirm",
+          "complete": "front_entry_complete",
+          "error": "front_entry_error"
+        },
+        "front.job-view": {
+          "view": "front_job_view"
+        }
       },
       "pages": {
-        "a": {"form": "front.entry", "step": "input"},
-        "b": {"form": "front.entry", "step": "confirm"},
-        "c": {"form": "front.job-view", "step": "view"}
+        "a": {
+          "form": "front.entry",
+          "step": "input"
+        },
+        "b": {
+          "form": "front.entry",
+          "step": "confirm"
+        },
+        "c": {
+          "form": "front.job-view",
+          "step": "view"
+        }
       }
     },
     {
       "name": "pages with a mode",
-      "catalog": {"version": 1, "forms": {
-        "admin.job-posting": {"label": "Posting", "steps": {"input": [{"page": "new", "mode": "create"}, {"page": "edit", "mode": "edit"}]}}
-      }},
+      "catalog": {
+        "version": 1,
+        "forms": {
+          "admin.job-posting": {
+            "label": "Posting",
+            "steps": {
+              "input": [
+                {
+                  "page": "new",
+                  "mode": "create"
+                },
+                {
+                  "page": "edit",
+                  "mode": "edit"
+                }
+              ]
+            }
+          }
+        }
+      },
       "valid": true,
       "pages": {
-        "new": {"form": "admin.job-posting", "step": "input", "mode": "create"},
-        "edit": {"form": "admin.job-posting", "step": "input", "mode": "edit"}
+        "new": {
+          "form": "admin.job-posting",
+          "step": "input",
+          "mode": "create"
+        },
+        "edit": {
+          "form": "admin.job-posting",
+          "step": "input",
+          "mode": "edit"
+        }
       }
     },
     {
       "name": "upper-case form key",
-      "catalog": {"version": 1, "forms": {"Front.entry": {"label": "Entry", "steps": {"input": []}}}},
+      "catalog": {
+        "version": 1,
+        "forms": {
+          "Front.entry": {
+            "label": "Entry",
+            "steps": {
+              "input": []
+            }
+          }
+        }
+      },
       "valid": false
     },
     {
       "name": "a form without input",
-      "catalog": {"version": 1, "forms": {"front.entry": {"label": "Entry", "steps": {"confirm": []}}}},
+      "catalog": {
+        "version": 1,
+        "forms": {
+          "front.entry": {
+            "label": "Entry",
+            "steps": {
+              "confirm": []
+            }
+          }
+        }
+      },
       "valid": false
     },
     {
       "name": "form steps and a page step together",
-      "catalog": {"version": 1, "forms": {"front.entry": {"label": "Entry", "steps": {"input": [], "view": []}}}},
+      "catalog": {
+        "version": 1,
+        "forms": {
+          "front.entry": {
+            "label": "Entry",
+            "steps": {
+              "input": [],
+              "view": []
+            }
+          }
+        }
+      },
       "valid": false
     },
     {
       "name": "error is not listed",
-      "catalog": {"version": 1, "forms": {"front.entry": {"label": "Entry", "steps": {"input": [], "error": []}}}},
+      "catalog": {
+        "version": 1,
+        "forms": {
+          "front.entry": {
+            "label": "Entry",
+            "steps": {
+              "input": [],
+              "error": []
+            }
+          }
+        }
+      },
       "valid": false
     },
     {
       "name": "a parameter named like one sent with every push",
-      "catalog": {"version": 1, "forms": {"front.entry": {"label": "Entry", "steps": {"input": []}, "params": {"step": {"label": "Step", "from": "x"}}}}},
+      "catalog": {
+        "version": 1,
+        "forms": {
+          "front.entry": {
+            "label": "Entry",
+            "steps": {
+              "input": []
+            },
+            "params": {
+              "step": {
+                "label": "Step",
+                "from": "x"
+              }
+            }
+          }
+        }
+      },
       "valid": false
     },
     {
       "name": "a parameter with a reserved prefix",
-      "catalog": {"version": 1, "forms": {"front.entry": {"label": "Entry", "steps": {"input": []}, "params": {"ga_session": {"label": "Session", "from": "x"}}}}},
+      "catalog": {
+        "version": 1,
+        "forms": {
+          "front.entry": {
+            "label": "Entry",
+            "steps": {
+              "input": []
+            },
+            "params": {
+              "ga_session": {
+                "label": "Session",
+                "from": "x"
+              }
+            }
+          }
+        }
+      },
       "valid": false
     },
     {
       "name": "a lookup table that is not an identifier",
-      "catalog": {"version": 1, "forms": {"front.entry": {"label": "Entry", "steps": {"input": []}, "params": {"p": {"label": "P", "from": "x", "lookup": {"table": "a; drop", "key": "id", "column": "name"}}}}}},
+      "catalog": {
+        "version": 1,
+        "forms": {
+          "front.entry": {
+            "label": "Entry",
+            "steps": {
+              "input": []
+            },
+            "params": {
+              "p": {
+                "label": "P",
+                "from": "x",
+                "lookup": {
+                  "table": "a; drop",
+                  "key": "id",
+                  "column": "name"
+                }
+              }
+            }
+          }
+        }
+      },
       "valid": false
     },
     {
       "name": "the same page twice",
-      "catalog": {"version": 1, "forms": {
-        "front.entry": {"label": "Entry", "steps": {"input": [{"page": "a"}]}},
-        "front.inquiry": {"label": "Inquiry", "steps": {"input": [{"page": "a"}]}}
-      }},
+      "catalog": {
+        "version": 1,
+        "forms": {
+          "front.entry": {
+            "label": "Entry",
+            "steps": {
+              "input": [
+                {
+                  "page": "a"
+                }
+              ]
+            }
+          },
+          "front.inquiry": {
+            "label": "Inquiry",
+            "steps": {
+              "input": [
+                {
+                  "page": "a"
+                }
+              ]
+            }
+          }
+        }
+      },
       "valid": false
     },
     {
       "name": "a default event name longer than 40 characters",
-      "catalog": {"version": 1, "forms": {"admin.a-very-long-form-key-for-names": {"label": "Long", "steps": {"input": [], "complete": []}}}},
+      "catalog": {
+        "version": 1,
+        "forms": {
+          "admin.a-very-long-form-key-for-names": {
+            "label": "Long",
+            "steps": {
+              "input": [],
+              "complete": []
+            }
+          }
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "a form key ending with a newline",
+      "catalog": {
+        "version": 1,
+        "forms": {
+          "front.entry\n": {
+            "label": "Entry",
+            "steps": {
+              "input": []
+            }
+          }
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "a default event name with a reserved prefix",
+      "catalog": {
+        "version": 1,
+        "forms": {
+          "google.ads": {
+            "label": "Ads",
+            "steps": {
+              "input": []
+            }
+          }
+        }
+      },
+      "valid": false
+    },
+    {
+      "name": "null where a value is expected",
+      "catalog": {
+        "version": 1,
+        "forms": {
+          "front.entry": {
+            "label": "Entry",
+            "enabled": null,
+            "steps": {
+              "input": []
+            }
+          }
+        }
+      },
       "valid": false
     }
   ]
