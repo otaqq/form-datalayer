@@ -55,13 +55,9 @@
         "steps": {
           "type": "object",
           "propertyNames": {
-            "enum": [
-              "input",
-              "confirm",
-              "complete",
-              "error",
-              "view"
-            ]
+            "type": "string",
+            "pattern": "^[a-z]+$",
+            "description": "input, confirm, complete or error; other names (view of v0.2) are stale, not errors"
           },
           "additionalProperties": {
             "$ref": "#/$defs/step"

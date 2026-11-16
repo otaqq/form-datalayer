@@ -13,9 +13,16 @@ return [
 
     // GTM containers by name, for @formDatalayerHead('default') and @formDatalayerBody('default').
     // Their ids are entered on the settings screen; `default` is used until then (empty: no tag and no pushes).
+    // A container with 'follows' => 'default' gets the same id, chosen with a checkbox (e.g. an admin area).
     'containers' => [
         'default' => ['label' => 'Site', 'default' => ''],
     ],
+
+    // Labels of the tabs of the settings screen, by group (the first word of the form keys).
+    'groups' => [],
+
+    // Flash keys that mean a `complete` route failed, besides validation errors (e.g. 'error').
+    'failures' => [],
 
     // The data layer variable.
     'variable' => 'dataLayer',

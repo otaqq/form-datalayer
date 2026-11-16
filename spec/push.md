@@ -8,18 +8,32 @@ A push is one object added to `dataLayer` for one step of one form:
 
 ## Steps
 
-The framework adapter finds the step of the current request from the catalog's pages:
+The framework adapter finds the step of the current request from the pages (the catalog's and the routes'):
 
 - The page of the request is listed under a step: that step, with the page's `mode` if it has one.
 - The page is an `input` page and the request carries the validation errors of the previous submit (Laravel: the `errors` in the session): `error` instead of `input`. `error` has the same pages and mode as `input`.
 - The page is not in the catalog: no push.
+
+## Pages from routes
+
+Where the framework lets routes carry metadata, the adapter takes the pages from there: each route names its form, its step and, for `input`, its mode. Laravel:
+
+```php
+Route::get('entry/{posting}', …)->name('entries.create')->dataLayer('front.entry', 'input');
+Route::get('prefectures/{id}/edit', …)->dataLayer('admin.prefecture', 'input', mode: 'edit');
+Route::post('prefectures/confirm', …)->dataLayer('admin.prefecture', 'complete');
+```
+
+The page id of a route is its name, or its method, domain and URI when it has none.
+
+A route marked `complete` handles the final submit. When its own action answers with a redirect (a redirect from a route middleware, such as a password confirmation, does not count) and has not flashed a failure (validation errors, or the flash keys the app lists as failures), the adapter pushes `complete` on the next page, with the context the request gave (`with()`) and the mode the app set for it, if any (Laravel: `FormDatalayer::mode('edit')`). The app writes nothing else for the step. A route marked `complete` that answers with a page (no redirect) pushes `complete` on that page.
 
 ## Pushing a step
 
 The app can also push a step itself, with the form key, the step, the context and the mode if it knows it:
 
 - **Now**: the push goes into the page being rendered.
-- **On the next page** (flash): for a step shown after a redirect. A form saved in the admin screen redirects to a list; the app pushes `complete` when it saves, and the push appears on the list.
+- **On the next page** (flash): for a step shown after a redirect, when routes cannot say it. A form saved in the admin screen redirects to a list; the app pushes `complete` when it saves, and the push appears on the list.
 
 A form key or step that is not in the catalog is a programming error (an exception). A page may carry several pushes; they keep their order.
 
@@ -28,7 +42,7 @@ A form key or step that is not in the catalog is a programming error (an excepti
 1. Stop with no push when any of these is true:
    - the catalog turns the form off (`enabled: false`),
    - the settings file is broken ([settings.md](settings.md#broken-files)),
-   - the settings turn the form off.
+   - the settings do not turn the form on (forms are off by default, [settings.md](settings.md#defaults)).
 2. `event` is the step's event in the settings, or the [default name](#event-names).
 3. The object starts with `event`, `form` (the key), `step`, then `mode` when it is known.
 4. Each parameter of the form, in catalog order, is added when it is chosen ([settings.md](settings.md#defaults)) and has a [value](#values). Parameters with no value are left out, not sent empty.
@@ -37,10 +51,7 @@ A form key or step that is not in the catalog is a programming error (an excepti
 
 The default name of a step is made from the form key, with `.` and `-` replaced by `_`:
 
-| Step | Default name | Example |
-|---|---|---|
-| a form step | `<key>_<step>` | `front.entry` → `front_entry_input`, `front_entry_confirm`, `front_entry_complete`, `front_entry_error` |
-| `view` | `<key>` | `front.job-view` → `front_job_view` |
+`<key>_<step>`: `front.entry` → `front_entry_input`, `front_entry_confirm`, `front_entry_complete`, `front_entry_error`.
 
 A catalog whose default names are longer than 40 characters is rejected ([catalog.md](catalog.md#checks)); shorten the key.
 

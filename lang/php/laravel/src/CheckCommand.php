@@ -6,7 +6,6 @@ namespace Otaqq\FormDatalayer\Laravel;
 
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Config\Repository as Config;
-use Otaqq\FormDatalayer\Catalog;
 use Otaqq\FormDatalayer\Exception\InvalidCatalog;
 use Otaqq\FormDatalayer\Settings;
 
@@ -23,7 +22,7 @@ final class CheckCommand extends Command
     public function handle(Config $config, FormDatalayer $datalayer): int
     {
         try {
-            $catalog = Catalog::fromFile((string) $config->get('form-datalayer.catalog'));
+            $catalog = $datalayer->catalog();
         } catch (InvalidCatalog $e) {
             $this->error("Catalog rejected: {$e->getMessage()}");
 
@@ -39,6 +38,12 @@ final class CheckCommand extends Command
         $removed = $settings->stale($catalog, array_keys($datalayer->containers()));
         $new = [];
         foreach ($catalog->forms() as $key => $form) {
+            if ($settings->isNewForm($key)) {
+                $new[] = "new form (off): {$key}";
+            }
+            if ($form->steps === []) {
+                $new[] = "form without pages: {$key}";
+            }
             foreach ($form->stepNames() as $step) {
                 foreach (array_keys($form->params) as $name) {
                     if ($settings->isNewParam($key, $step, $name)) {

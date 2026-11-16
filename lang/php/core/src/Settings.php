@@ -13,7 +13,7 @@ use JsonException;
  */
 final class Settings
 {
-    private const STEPS = [...Names::FORM_STEPS, Names::PAGE_STEP];
+    private const STEPS = Names::FORM_STEPS;
 
     /**
      * @param  array<string, array{enabled?: bool, steps?: array<string, array{event?: string|null, params?: array<string, bool>}>}>  $forms
@@ -146,8 +146,9 @@ final class Settings
     private static function validateStep(string $step, mixed $settings, string $at): array
     {
         $errors = [];
-        if (! in_array($step, self::STEPS, true)) {
-            $errors[] = "{$at}: unknown step";
+        // A step that is not a form step (`view` of v0.2) is a stale name, reported by stale(), not an error
+        if (preg_match('/^[a-z]+$/D', $step) !== 1) {
+            $errors[] = "{$at}: invalid step name";
         }
         if (! self::isMap($settings)) {
             return [...$errors, "{$at} must be an object"];
@@ -185,11 +186,29 @@ final class Settings
     }
 
     /**
-     * Whether the settings measure the form (true unless turned off).
+     * Whether the settings measure the form. Forms are off until turned on (spec/settings.md#defaults).
      */
     public function formEnabled(string $form): bool
     {
-        return $this->forms[$form]['enabled'] ?? true;
+        return $this->forms[$form]['enabled'] ?? false;
+    }
+
+    /**
+     * Whether a form is new: not in the saved settings (added since the last save).
+     */
+    public function isNewForm(string $form): bool
+    {
+        return ! isset($this->forms[$form]);
+    }
+
+    /**
+     * The saved settings of one form, as in the file, or null.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function form(string $form): ?array
+    {
+        return $this->forms[$form] ?? null;
     }
 
     /**

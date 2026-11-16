@@ -63,14 +63,54 @@ final class Catalog
         }
 
         $forms = [];
-        $pages = [];
         foreach ($formsData as $key => $formData) {
             $key = (string) $key;
             if (! Names::isFormKey($key)) {
                 throw new InvalidCatalog("Invalid form key: {$key}");
             }
-            $form = self::parseForm($key, $formData);
-            foreach ($form->stepNames() as $step) {
+            $forms[$key] = self::parseForm($key, $formData);
+        }
+
+        return self::checked($forms);
+    }
+
+    /**
+     * The catalog with the pages the framework's routes declare (spec/push.md#pages-from-routes).
+     * A form only routes name is added with its key as label and no parameters.
+     *
+     * @param  list<Page>  $pages
+     */
+    public function withPages(array $pages): self
+    {
+        $forms = $this->forms;
+        $byForm = [];
+        foreach ($pages as $page) {
+            if (! Names::isFormKey($page->form)) {
+                throw new InvalidCatalog("Invalid form key on the page {$page->id}: {$page->form}");
+            }
+            if (! in_array($page->step, Names::PAGE_STEPS, true)) {
+                throw new InvalidCatalog("Invalid step on the page {$page->id}: {$page->step} (input, confirm or complete)");
+            }
+            if ($page->mode !== null && ! in_array($page->mode, Names::MODES, true)) {
+                throw new InvalidCatalog("Invalid mode on the page {$page->id}: {$page->mode} (create or edit)");
+            }
+            $byForm[$page->form][$page->step][] = $page;
+        }
+        foreach ($byForm as $key => $steps) {
+            $forms[$key] = ($forms[$key] ?? new Form($key, $key, true, [], []))->withPages($steps);
+        }
+
+        return self::checked($forms);
+    }
+
+    /**
+     * @param  array<string, Form>  $forms
+     */
+    private static function checked(array $forms): self
+    {
+        $pages = [];
+        foreach ($forms as $key => $form) {
+            foreach (Names::FORM_STEPS as $step) {
                 if (! Names::isEventName(Names::defaultEventName($key, $step))) {
                     throw new InvalidCatalog("The default event name of {$key}.{$step} is longer than 40 characters or starts with google_, ga_ or firebase_; change the key");
                 }
@@ -83,7 +123,6 @@ final class Catalog
                     $pages[$page->id] = $page;
                 }
             }
-            $forms[$key] = $form;
         }
 
         return new self($forms, $pages);
@@ -131,18 +170,18 @@ final class Catalog
             throw new InvalidCatalog("{$at}.enabled must be true or false");
         }
 
-        $stepsData = $data['steps'] ?? null;
-        if (! self::isMap($stepsData) || $stepsData === []) {
+        $stepsData = $data['steps'] ?? [];
+        if (! self::isMap($stepsData)) {
             throw new InvalidCatalog("{$at}.steps must be an object");
         }
-        $names = array_keys($stepsData);
-        $isPage = $names === [Names::PAGE_STEP];
-        if (! $isPage && (! in_array('input', $names, true) || array_diff($names, ['input', 'confirm', 'complete']) !== [])) {
-            throw new InvalidCatalog("{$at}.steps must have input (and confirm, complete), or view alone");
+        if (array_diff(array_map('strval', array_keys($stepsData)), Names::PAGE_STEPS) !== []) {
+            throw new InvalidCatalog("{$at}.steps may have input, confirm and complete only");
         }
         $steps = [];
-        foreach ($stepsData as $step => $pagesData) {
-            $steps[$step] = self::parsePages($key, (string) $step, $pagesData, "{$at}.steps.{$step}");
+        foreach (Names::PAGE_STEPS as $step) {
+            if (array_key_exists($step, $stepsData)) {
+                $steps[$step] = self::parsePages($key, $step, $stepsData[$step], "{$at}.steps.{$step}");
+            }
         }
 
         $paramsData = $data['params'] ?? [];

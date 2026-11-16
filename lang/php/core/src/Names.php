@@ -11,7 +11,8 @@ final class Names
 {
     public const FORM_STEPS = ['input', 'confirm', 'complete', 'error'];
 
-    public const PAGE_STEP = 'view';
+    /** The steps pages can show (`error` has the pages of `input`). */
+    public const PAGE_STEPS = ['input', 'confirm', 'complete'];
 
     public const MODES = ['create', 'edit'];
 
@@ -60,12 +61,18 @@ final class Names
     }
 
     /**
-     * `<key>_<step>` for form steps and `<key>` for `view`, with `.` and `-` replaced by `_`.
+     * `<key>_<step>`, with `.` and `-` replaced by `_`.
      */
     public static function defaultEventName(string $formKey, string $step): string
     {
-        $base = str_replace(['.', '-'], '_', $formKey);
+        return str_replace(['.', '-'], '_', $formKey)."_{$step}";
+    }
 
-        return $step === self::PAGE_STEP ? $base : "{$base}_{$step}";
+    /**
+     * The group of a form: the first word of its key (`front` for `front.entry`).
+     */
+    public static function group(string $formKey): string
+    {
+        return (string) preg_split('/[.-]/', $formKey, 2)[0];
     }
 }

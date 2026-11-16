@@ -56,6 +56,18 @@ abstract class TestCase extends Orchestra
         parent::tearDown();
     }
 
+    /**
+     * Writes the settings file.
+     *
+     * @param  array<string, mixed>  $forms
+     * @param  array<string, string>  $containers
+     */
+    protected function saveSettings(array $forms, array $containers = [], int $version = 1): void
+    {
+        @mkdir(dirname($this->settingsPath), 0775, true);
+        file_put_contents($this->settingsPath, json_encode(array_filter(['version' => $version, 'containers' => $containers, 'forms' => $forms]), JSON_FORCE_OBJECT));
+    }
+
     protected function user(string $role = 'admin'): GenericUser
     {
         return new GenericUser(['id' => 1, 'email' => 'admin@example.com', 'role' => $role, 'remember_token' => null]);

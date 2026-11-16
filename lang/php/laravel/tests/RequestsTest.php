@@ -17,7 +17,7 @@ final class RequestsTest extends TestCase
     protected function defineRoutes($router): void
     {
         Route::middleware('web')->group(function () {
-            Route::get('entry', fn () => view('page'))->name('front.entries.create');
+            Route::get('entry', fn () => view('page'))->name('front.entries.create')->dataLayer('front.entry', 'input');
             Route::get('pushed', function () {
                 FormDatalayer::with(['posting' => ['code' => 'from-with', 'prefecture_ids' => [13, 27]]]);
                 FormDatalayer::with(['posting' => ['prefecture_ids' => [27]]]);
@@ -37,6 +37,12 @@ final class RequestsTest extends TestCase
         });
     }
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->saveSettings(['front.entry' => ['enabled' => true], 'admin.job-posting' => ['enabled' => true]]);
+    }
+
     public function test_the_facade_follows_each_request(): void
     {
         $this->assertCount(1, self::pushesIn($this->get('/pushed')->getContent()));
@@ -45,7 +51,7 @@ final class RequestsTest extends TestCase
 
     public function test_push_values_win_over_with_lists_are_replaced_and_the_input_is_there(): void
     {
-        file_put_contents($this->settings(), json_encode(['version' => 1, 'forms' => ['front.entry' => ['steps' => ['complete' => ['params' => ['desired' => true]]]]]]));
+        $this->saveSettings(['front.entry' => ['enabled' => true, 'steps' => ['complete' => ['params' => ['desired' => true]]]]]);
 
         $push = self::pushesIn($this->get('/pushed?desired_prefecture_id=13')->getContent())[0];
 
@@ -68,7 +74,7 @@ final class RequestsTest extends TestCase
 
     public function test_input_that_json_cannot_carry_does_not_break_the_page(): void
     {
-        file_put_contents($this->settings(), json_encode(['version' => 1, 'forms' => ['front.entry' => ['steps' => ['input' => ['params' => ['desired' => true]]]]]]));
+        $this->saveSettings(['front.entry' => ['enabled' => true, 'steps' => ['input' => ['params' => ['desired' => true]]]]]);
 
         $this->get('/entry?desired_prefecture_id=%FF')->assertOk()->assertSee('GTM-FRONT1');
     }
@@ -83,10 +89,4 @@ final class RequestsTest extends TestCase
         $this->assertArrayNotHasKey('prefectures', self::pushesIn($html)[0]);
     }
 
-    private function settings(): string
-    {
-        @mkdir(dirname($this->settingsPath), 0775, true);
-
-        return $this->settingsPath;
-    }
 }

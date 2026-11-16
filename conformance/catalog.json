@@ -1,7 +1,7 @@
 {
   "cases": [
     {
-      "name": "a form and a page",
+      "name": "forms with and without pages",
       "catalog": {
         "version": 1,
         "forms": {
@@ -21,28 +21,46 @@
               "complete": []
             }
           },
-          "front.job-view": {
-            "label": "Job",
+          "admin.login": {
+            "label": "Login",
             "steps": {
-              "view": [
+              "input": [
                 {
                   "page": "c"
                 }
               ]
             }
+          },
+          "admin.export": {
+            "label": "Export"
           }
         }
       },
       "valid": true,
+      "steps": {
+        "front.entry": [
+          "input",
+          "confirm",
+          "complete",
+          "error"
+        ],
+        "admin.login": [
+          "input",
+          "error"
+        ],
+        "admin.export": []
+      },
+      "groups": {
+        "front.entry": "front",
+        "admin.login": "admin",
+        "admin.export": "admin"
+      },
       "event_names": {
         "front.entry": {
           "input": "front_entry_input",
           "confirm": "front_entry_confirm",
           "complete": "front_entry_complete",
           "error": "front_entry_error"
-        },
-        "front.job-view": {
-          "view": "front_job_view"
         }
       },
       "pages": {
@@ -55,8 +73,8 @@
           "step": "confirm"
         },
         "c": {
-          "form": "front.job-view",
-          "step": "view"
+          "form": "admin.login",
+          "step": "input"
         }
       }
     },
@@ -112,7 +130,7 @@
       "valid": false
     },
     {
-      "name": "a form without input",
+      "name": "a form without input is fine (no error step)",
       "catalog": {
         "version": 1,
         "forms": {
@@ -124,17 +142,21 @@
           }
         }
       },
-      "valid": false
+      "valid": true,
+      "steps": {
+        "front.entry": [
+          "confirm"
+        ]
+      }
     },
     {
-      "name": "form steps and a page step together",
+      "name": "view is not a step",
       "catalog": {
         "version": 1,
         "forms": {
           "front.entry": {
             "label": "Entry",
             "steps": {
-              "input": [],
               "view": []
             }
           }
@@ -315,6 +337,108 @@
           }
         }
       },
+      "valid": false
+    },
+    {
+      "name": "pages from routes add steps and forms",
+      "catalog": {
+        "version": 1,
+        "forms": {
+          "front.entry": {
+            "label": "Entry",
+            "steps": {
+              "input": [
+                {
+                  "page": "a"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "routes": [
+        {
+          "page": "POST entry/confirm",
+          "form": "front.entry",
+          "step": "complete"
+        },
+        {
+          "page": "admin.prefectures.edit",
+          "form": "admin.prefecture",
+          "step": "input",
+          "mode": "edit"
+        }
+      ],
+      "valid": true,
+      "steps": {
+        "front.entry": [
+          "input",
+          "complete",
+          "error"
+        ],
+        "admin.prefecture": [
+          "input",
+          "error"
+        ]
+      },
+      "labels": {
+        "admin.prefecture": "admin.prefecture"
+      },
+      "pages": {
+        "a": {
+          "form": "front.entry",
+          "step": "input"
+        },
+        "POST entry/confirm": {
+          "form": "front.entry",
+          "step": "complete"
+        },
+        "admin.prefectures.edit": {
+          "form": "admin.prefecture",
+          "step": "input",
+          "mode": "edit"
+        }
+      }
+    },
+    {
+      "name": "a route page that is also a catalog page",
+      "catalog": {
+        "version": 1,
+        "forms": {
+          "front.entry": {
+            "label": "Entry",
+            "steps": {
+              "input": [
+                {
+                  "page": "a"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "routes": [
+        {
+          "page": "a",
+          "form": "front.entry",
+          "step": "input"
+        }
+      ],
+      "valid": false
+    },
+    {
+      "name": "a route with a step that is not a page step",
+      "catalog": {
+        "version": 1,
+        "forms": {}
+      },
+      "routes": [
+        {
+          "page": "a",
+          "form": "front.entry",
+          "step": "error"
+        }
+      ],
       "valid": false
     }
   ]

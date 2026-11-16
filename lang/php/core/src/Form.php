@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Otaqq\FormDatalayer;
 
 /**
- * A form or a page of the catalog (spec/catalog.md#fields).
+ * A form of the catalog, with its pages from the catalog and the routes (spec/catalog.md#fields).
  */
 final class Form
 {
     /**
-     * @param  array<string, list<Page>>  $steps  Step → pages, as listed in the catalog (`error` is not listed)
+     * @param  array<string, list<Page>>  $steps  Step → pages (`input`, `confirm`, `complete`; `error` is not listed)
      * @param  array<string, Param>  $params  In catalog order
      */
     public function __construct(
@@ -22,29 +22,52 @@ final class Form
     ) {}
 
     /**
-     * A page (a `view` step) rather than a form.
+     * The group of the form (the first word of its key), for the tabs of the settings screen.
      */
-    public function isPage(): bool
+    public function group(): string
     {
-        return isset($this->steps[Names::PAGE_STEP]);
+        return Names::group($this->key);
     }
 
     /**
-     * Every step the form has, `error` included for forms: input, confirm, complete, error, or view.
+     * The steps the form shows, in order: those with pages, and `error` when it has `input`.
      *
      * @return list<string>
      */
     public function stepNames(): array
     {
-        if ($this->isPage()) {
-            return [Names::PAGE_STEP];
-        }
-
-        return array_values(array_filter(Names::FORM_STEPS, fn (string $step) => $step === 'error' || isset($this->steps[$step])));
+        return array_values(array_filter(
+            Names::FORM_STEPS,
+            fn (string $step) => isset($this->steps[$step]) || ($step === 'error' && isset($this->steps['input'])),
+        ));
     }
 
+    /**
+     * Whether the step is a form step. Any form may push any of them (the app may push a step itself).
+     */
     public function hasStep(string $step): bool
     {
-        return in_array($step, $this->stepNames(), true);
+        return in_array($step, Names::FORM_STEPS, true);
+    }
+
+    /**
+     * The same form with more pages.
+     *
+     * @param  array<string, list<Page>>  $steps
+     */
+    public function withPages(array $steps): self
+    {
+        $merged = $this->steps;
+        foreach ($steps as $step => $pages) {
+            $merged[$step] = [...($merged[$step] ?? []), ...$pages];
+        }
+        $ordered = [];
+        foreach (Names::PAGE_STEPS as $step) {
+            if (isset($merged[$step])) {
+                $ordered[$step] = $merged[$step];
+            }
+        }
+
+        return new self($this->key, $this->label, $this->enabled, $ordered, $this->params);
     }
 }

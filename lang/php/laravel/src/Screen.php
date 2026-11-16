@@ -10,79 +10,84 @@ use Otaqq\FormDatalayer\Names;
 use Otaqq\FormDatalayer\Settings;
 
 /**
- * What the settings screen shows and saves (spec/admin.md#screen).
+ * What the settings screen shows and saves (spec/admin.md#screen): the list of forms by group (tabs),
+ * one form's page, and the containers. Every save writes the whole file, with names that are gone dropped.
  */
 final class Screen
 {
     /**
-     * @param  array<string, array{label: string, default: string}>  $containers  The containers the app declares
+     * @param  array<string, array{label: string, default: string, follows: string|null}>  $containers  The containers the app declares
+     * @param  array<string, string>  $groupLabels  Tab labels by group
      */
-    public function __construct(private readonly Catalog $catalog, private readonly Settings $settings, private readonly array $containers = []) {}
+    public function __construct(
+        private readonly Catalog $catalog,
+        private readonly Settings $settings,
+        private readonly array $containers = [],
+        private readonly array $groupLabels = [],
+    ) {}
 
     /**
-     * The container ids as the screen shows them: saved, or the config default until saved.
+     * The containers as the screen shows them: a GTM id field, or a checkbox for a container that follows another.
      *
-     * @return list<array{name: string, label: string, id: string}>
+     * @return list<array{name: string, label: string, id: string, follows: string|null, checked: bool}>
      */
     public function containers(): array
     {
         $rows = [];
         foreach ($this->containers as $name => $container) {
-            $rows[] = ['name' => $name, 'label' => $container['label'], 'id' => $this->settings->container($name) ?? $container['default']];
+            $id = $this->settings->container($name) ?? $container['default'];
+            $rows[] = ['name' => $name, 'label' => $container['label'], 'id' => $id, 'follows' => $container['follows'], 'checked' => $id !== ''];
         }
 
         return $rows;
     }
 
     /**
-     * The container ids to save from the submitted screen: every declared container, '' for none.
+     * The tabs: group → label, in the order the groups first appear.
      *
-     * @param  array<mixed>  $input  `containers.<name>`
      * @return array<string, string>
      */
-    public function containersToSave(array $input): array
+    public function groups(): array
     {
-        $ids = [];
-        foreach (array_keys($this->containers) as $name) {
-            $ids[$name] = is_string($input[$name] ?? null) ? trim($input[$name]) : '';
+        $groups = [];
+        foreach ($this->catalog->forms() as $form) {
+            $groups[$form->group()] ??= $this->groupLabels[$form->group()] ?? $form->group();
         }
 
-        return $ids;
+        return $groups;
     }
 
     /**
-     * Every form of the catalog, with its steps and parameters as the screen shows them.
+     * The rows of one tab.
      *
-     * @return list<array{key: string, label: string, locked: bool, enabled: bool, steps: list<array{step: string, event: string, default_event: string, params: list<array{name: string, label: string, checked: bool, new: bool}>}>}>
+     * @return list<array{key: string, label: string, locked: bool, enabled: bool, new: bool, new_params: bool, steps: int, params: int}>
      */
-    public function forms(): array
+    public function forms(string $group): array
     {
         $rows = [];
         foreach ($this->catalog->forms() as $key => $form) {
-            $steps = [];
+            if ($form->group() !== $group) {
+                continue;
+            }
+            $sent = [];
+            $newParams = false;
             foreach ($form->stepNames() as $step) {
-                $params = [];
                 foreach ($form->params as $name => $param) {
-                    $params[] = [
-                        'name' => $name,
-                        'label' => $param->label,
-                        'checked' => $this->settings->param($key, $step, $name) ?? $param->default,
-                        'new' => $this->settings->isNewParam($key, $step, $name),
-                    ];
+                    if ($this->settings->param($key, $step, $name) ?? $param->default) {
+                        $sent[$name] = true;
+                    }
+                    $newParams = $newParams || $this->settings->isNewParam($key, $step, $name);
                 }
-                $steps[] = [
-                    'step' => $step,
-                    'event' => $this->settings->event($key, $step) ?? '',
-                    'default_event' => Names::defaultEventName($key, $step),
-                    'params' => $params,
-                ];
             }
             $rows[] = [
                 'key' => $key,
                 'label' => $form->label,
                 'locked' => ! $form->enabled,
                 'enabled' => $form->enabled && $this->settings->formEnabled($key),
-                'steps' => $steps,
+                'new' => $form->enabled && $this->settings->isNewForm($key),
+                'new_params' => $newParams,
+                'steps' => count($form->stepNames()),
+                'params' => count($sent),
             ];
         }
 
@@ -90,7 +95,44 @@ final class Screen
     }
 
     /**
-     * The names in the saved settings the catalog no longer has (`unknown form: …`, …).
+     * One form's page: its on / off and its steps with event names and parameters.
+     *
+     * @return array{key: string, label: string, group: string, locked: bool, enabled: bool, steps: list<array{step: string, event: string, default_event: string, params: list<array{name: string, label: string, checked: bool, new: bool}>}>}
+     */
+    public function form(string $key): array
+    {
+        $form = $this->catalog->form($key);
+        $steps = [];
+        foreach ($form->stepNames() as $step) {
+            $params = [];
+            foreach ($form->params as $name => $param) {
+                $params[] = [
+                    'name' => $name,
+                    'label' => $param->label,
+                    'checked' => $this->settings->param($key, $step, $name) ?? $param->default,
+                    'new' => $this->settings->isNewParam($key, $step, $name),
+                ];
+            }
+            $steps[] = [
+                'step' => $step,
+                'event' => $this->settings->event($key, $step) ?? '',
+                'default_event' => Names::defaultEventName($key, $step),
+                'params' => $params,
+            ];
+        }
+
+        return [
+            'key' => $key,
+            'label' => $form->label,
+            'group' => $form->group(),
+            'locked' => ! $form->enabled,
+            'enabled' => $form->enabled && $this->settings->formEnabled($key),
+            'steps' => $steps,
+        ];
+    }
+
+    /**
+     * The names in the saved settings that are gone (`unknown container: …`, `unknown form: …`, …).
      *
      * @return list<string>
      */
@@ -100,28 +142,50 @@ final class Screen
     }
 
     /**
-     * The settings to save from the submitted screen: every form, step and parameter of the catalog.
-     * Forms the catalog turns off keep what was saved.
+     * The settings to save from the list: the containers, and on / off for the forms of one tab.
      *
-     * @param  array<mixed>  $input  `forms.<key>.enabled`, `forms.<key>.steps.<step>.event`, `forms.<key>.steps.<step>.params.<name>`
-     * @return array<string, mixed>
+     * @param  array<mixed>  $containers  `containers.<name>`: a GTM id, or '1' for a checked follower
+     * @param  array<mixed>  $enabled  `enabled.<key>`: '1' or '0'
+     * @return array{containers: array<string, string>, forms: array<string, mixed>}
      */
-    public function toSave(array $input): array
+    public function fromList(array $containers, array $enabled, string $group): array
     {
-        $forms = [];
+        $forms = $this->savedForms();
         foreach ($this->catalog->forms() as $key => $form) {
-            $forms[$key] = $form->enabled ? $this->fromInput($form, $input[$key] ?? []) : $this->fromSaved($form);
+            if ($form->group() === $group && $form->enabled) {
+                $forms[$key] = ['enabled' => filter_var($enabled[$key] ?? false, FILTER_VALIDATE_BOOLEAN)] + ($forms[$key] ?? []);
+            }
         }
 
-        return $forms;
+        return ['containers' => $this->containersFrom($containers), 'forms' => $forms];
     }
 
     /**
+     * The settings to save from one form's page: that form from the input, the rest as saved.
+     *
+     * @param  array<mixed>  $input  `enabled`, `steps.<step>.event`, `steps.<step>.params.<name>`
+     * @return array{containers: array<string, string>, forms: array<string, mixed>}
+     */
+    public function fromForm(string $key, array $input): array
+    {
+        $forms = $this->savedForms();
+        $form = $this->catalog->form($key);
+        if ($form->enabled) {
+            $saved = $forms[$key]['steps'] ?? [];
+            $forms[$key] = $this->formFromInput($form, $input);
+            // Steps the page does not show (pushed by the app itself) keep what was saved
+            $forms[$key]['steps'] += $saved;
+        }
+
+        return ['containers' => $this->savedContainers(), 'forms' => $forms];
+    }
+
+    /**
+     * @param  array<mixed>  $input
      * @return array<string, mixed>
      */
-    private function fromInput(Form $form, mixed $input): array
+    private function formFromInput(Form $form, array $input): array
     {
-        $input = is_array($input) ? $input : [];
         $steps = [];
         foreach ($form->stepNames() as $step) {
             $stepInput = is_array($input['steps'][$step] ?? null) ? $input['steps'][$step] : [];
@@ -141,29 +205,74 @@ final class Screen
     }
 
     /**
+     * The saved forms, keeping only what the catalog still has (a save drops names that are gone).
+     *
      * @return array<string, mixed>
      */
-    private function fromSaved(Form $form): array
+    private function savedForms(): array
     {
-        $steps = [];
-        foreach ($form->stepNames() as $step) {
-            $settings = [];
-            $event = $this->settings->event($form->key, $step);
-            if ($event !== null) {
-                $settings['event'] = $event;
+        $forms = [];
+        foreach ($this->catalog->forms() as $key => $form) {
+            $saved = $this->settings->form($key);
+            if ($saved === null) {
+                continue;
             }
-            foreach (array_keys($form->params) as $name) {
-                $send = $this->settings->param($form->key, $step, $name);
-                if ($send !== null) {
-                    $settings['params'][$name] = $send;
+            $kept = array_key_exists('enabled', $saved) ? ['enabled' => (bool) $saved['enabled']] : [];
+            foreach ((array) ($saved['steps'] ?? []) as $step => $settings) {
+                $step = (string) $step;
+                if (! $form->hasStep($step) || ! is_array($settings)) {
+                    continue;
+                }
+                $kept['steps'][$step] = [];
+                if (isset($settings['event'])) {
+                    $kept['steps'][$step]['event'] = $settings['event'];
+                }
+                foreach ((array) ($settings['params'] ?? []) as $name => $send) {
+                    if (isset($form->params[$name])) {
+                        $kept['steps'][$step]['params'][$name] = (bool) $send;
+                    }
                 }
             }
-            if ($settings !== []) {
-                $steps[$step] = $settings;
+            $forms[$key] = $kept;
+        }
+
+        return $forms;
+    }
+
+    /**
+     * @param  array<mixed>  $input
+     * @return array<string, string>
+     */
+    private function containersFrom(array $input): array
+    {
+        $ids = [];
+        foreach ($this->containers as $name => $container) {
+            if ($container['follows'] === null) {
+                $ids[$name] = is_string($input[$name] ?? null) ? trim($input[$name]) : '';
             }
         }
-        $saved = ['enabled' => $this->settings->formEnabled($form->key)];
+        foreach ($this->containers as $name => $container) {
+            if ($container['follows'] !== null) {
+                $ids[$name] = filter_var($input[$name] ?? false, FILTER_VALIDATE_BOOLEAN) ? ($ids[$container['follows']] ?? '') : '';
+            }
+        }
 
-        return $steps === [] ? $saved : [...$saved, 'steps' => $steps];
+        return $ids;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function savedContainers(): array
+    {
+        $ids = [];
+        foreach (array_keys($this->containers) as $name) {
+            $id = $this->settings->container($name);
+            if ($id !== null) {
+                $ids[$name] = $id;
+            }
+        }
+
+        return $ids;
     }
 }

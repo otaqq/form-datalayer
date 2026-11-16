@@ -17,16 +17,17 @@ final class UnsafeValuesTest extends TestCase
 {
     public function test_invalid_utf8_and_non_finite_numbers_are_dropped_with_a_warning(): void
     {
-        $catalog = Catalog::fromArray(['version' => 1, 'forms' => ['f' => ['label' => 'F', 'steps' => ['view' => []], 'params' => [
+        $catalog = Catalog::fromArray(['version' => 1, 'forms' => ['f' => ['label' => 'F', 'params' => [
             'q' => ['label' => 'Q', 'from' => 'q', 'default' => true],
             'n' => ['label' => 'N', 'from' => 'n', 'default' => true],
             'l' => ['label' => 'L', 'from' => 'l.*', 'default' => true],
         ]]]]);
         $logger = new TestLogger;
 
-        $push = (new Pusher($catalog, Settings::empty(), logger: $logger))->push('f', 'view', ['q' => "\xFF", 'n' => NAN, 'l' => ["ok", "\xC3", INF]]);
+        $settings = Settings::fromArray(['version' => 1, 'forms' => ['f' => ['enabled' => true]]]);
+        $push = (new Pusher($catalog, $settings, logger: $logger))->push('f', 'input', ['q' => "\xFF", 'n' => NAN, 'l' => ["ok", "\xC3", INF]]);
 
-        $this->assertSame(['event' => 'f', 'form' => 'f', 'step' => 'view', 'l' => 'ok'], $push);
+        $this->assertSame(['event' => 'f_input', 'form' => 'f', 'step' => 'input', 'l' => 'ok'], $push);
         $this->assertCount(4, $logger->of('warning'));
         $this->assertNotNull(Output::pushScript([$push]));
     }

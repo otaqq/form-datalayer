@@ -8,6 +8,8 @@ The app declares its containers by name (`front` for the public site, `admin` fo
 
 The id of a container is the one saved on the settings screen ([settings.md](settings.md#fields)), or the app's default while none is saved. An id is `GTM-` and upper-case letters or digits.
 
+A container may **follow** another (`admin` follows `front`): the app uses one GTM container for both and only chooses whether the follower's pages get it. The screen shows a checkbox instead of a text field, and saving writes the followed id, or `""` when unchecked. Reading needs nothing more: the follower's id is in the settings like any other.
+
 An empty container id writes nothing at all: no tag and no pushes. A container id that breaks the rules, or a container the app does not declare, also writes nothing, and logs an error.
 
 ## Settings of the app

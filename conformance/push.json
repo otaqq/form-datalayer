@@ -79,30 +79,13 @@
           }
         }
       },
-      "front.job-view": {
-        "label": "Job shown",
-        "steps": {
-          "view": [
-            {
-              "page": "front.jobs.show"
-            }
-          ]
-        },
-        "params": {
-          "posting_code": {
-            "label": "Posting code",
-            "from": "posting.code",
-            "default": true
-          }
-        }
-      },
-      "front.job-search": {
-        "label": "Job search results",
+      "front.inquiry": {
+        "label": "Inquiry",
         "enabled": false,
         "steps": {
-          "view": [
+          "input": [
             {
-              "page": "front.jobs.index"
+              "page": "front.inquiries.create"
             }
           ]
         }
@@ -158,12 +141,24 @@
   },
   "cases": [
     {
+      "name": "forms are off until the settings turn them on",
+      "settings": null,
+      "form": "front.entry",
+      "step": "confirm",
+      "push": null
+    },
+    {
       "name": "saved container ids do not change the push",
       "settings": {
         "version": 1,
         "containers": {
           "front": "GTM-ABC1",
           "admin": ""
+        },
+        "forms": {
+          "front.entry": {
+            "enabled": true
+          }
         }
       },
       "form": "front.entry",
@@ -176,8 +171,15 @@
       }
     },
     {
-      "name": "defaults: default name and the default: true parameters only",
-      "settings": null,
+      "name": "turned on: default name and the default: true parameters only",
+      "settings": {
+        "version": 1,
+        "forms": {
+          "front.entry": {
+            "enabled": true
+          }
+        }
+      },
       "form": "front.entry",
       "step": "confirm",
       "push": {
@@ -193,6 +195,7 @@
         "version": 1,
         "forms": {
           "front.entry": {
+            "enabled": true,
             "steps": {
               "complete": {
                 "params": {
@@ -229,6 +232,7 @@
         "version": 1,
         "forms": {
           "front.entry": {
+            "enabled": true,
             "steps": {
               "confirm": {
                 "params": {
@@ -253,6 +257,7 @@
         "version": 1,
         "forms": {
           "front.entry": {
+            "enabled": true,
             "steps": {
               "confirm": {
                 "params": {
@@ -278,6 +283,7 @@
         "version": 1,
         "forms": {
           "front.entry": {
+            "enabled": true,
             "steps": {
               "complete": {
                 "event": "entry_complete"
@@ -297,7 +303,14 @@
     },
     {
       "name": "error has the default name of its own and the parameters of its own",
-      "settings": null,
+      "settings": {
+        "version": 1,
+        "forms": {
+          "front.entry": {
+            "enabled": true
+          }
+        }
+      },
       "form": "front.entry",
       "step": "error",
       "push": {
@@ -313,6 +326,7 @@
         "version": 1,
         "forms": {
           "admin.job-posting": {
+            "enabled": true,
             "steps": {
               "complete": {
                 "params": {
@@ -335,18 +349,6 @@
       }
     },
     {
-      "name": "a page: view, named after the key",
-      "settings": null,
-      "form": "front.job-view",
-      "step": "view",
-      "push": {
-        "event": "front_job_view",
-        "form": "front.job-view",
-        "step": "view",
-        "posting_code": "241116ab"
-      }
-    },
-    {
       "name": "turned off in the settings",
       "settings": {
         "version": 1,
@@ -365,13 +367,13 @@
       "settings": {
         "version": 1,
         "forms": {
-          "front.job-search": {
+          "front.inquiry": {
             "enabled": true
           }
         }
       },
-      "form": "front.job-search",
-      "step": "view",
+      "form": "front.inquiry",
+      "step": "input",
       "push": null
     },
     {
@@ -383,15 +385,13 @@
             "enabled": false
           },
           "front.entry": {
+            "enabled": true,
             "steps": {
               "confirm": {
                 "params": {
                   "posting_code": true,
                   "gone": true
                 }
-              },
-              "view": {
-                "event": "nope"
               }
             }
           }
@@ -407,8 +407,7 @@
       },
       "warnings": [
         "unknown form: front.gone",
-        "unknown param: front.entry.confirm.gone",
-        "unknown step: front.entry.view"
+        "unknown param: front.entry.confirm.gone"
       ]
     },
     {
@@ -417,6 +416,7 @@
         "version": 1,
         "forms": {
           "front.entry": {
+            "enabled": true,
             "steps": {
               "confirm": {
                 "params": {
@@ -440,6 +440,31 @@
       ]
     },
     {
+      "name": "a step that is not a form step (view of v0.2) is a stale name",
+      "settings": {
+        "version": 1,
+        "forms": {
+          "front.entry": {
+            "enabled": true,
+            "steps": {
+              "view": {}
+            }
+          }
+        }
+      },
+      "form": "front.entry",
+      "step": "confirm",
+      "push": {
+        "event": "front_entry_confirm",
+        "form": "front.entry",
+        "step": "confirm",
+        "posting_code": "241116ab"
+      },
+      "warnings": [
+        "unknown step: front.entry.view"
+      ]
+    },
+    {
       "name": "a broken settings file stops every push",
       "settings": "{not json",
       "form": "front.entry",
@@ -453,6 +478,7 @@
         "version": 1,
         "forms": {
           "front.entry": {
+            "enabled": true,
             "steps": {
               "confirm": {
                 "event": "has space"
@@ -472,6 +498,7 @@
         "version": 1,
         "forms": {
           "front.entry": {
+            "enabled": true,
             "steps": {
               "confirm": {
                 "event": "abc\n"
@@ -491,6 +518,11 @@
         "version": 1,
         "containers": {
           "front": "UA-123"
+        },
+        "forms": {
+          "front.entry": {
+            "enabled": true
+          }
         }
       },
       "form": "front.entry",

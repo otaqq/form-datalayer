@@ -21,7 +21,8 @@ final class FormDatalayerServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/form-datalayer.php', 'form-datalayer');
 
         $this->app->bind(Lookup::class, fn ($app) => new DatabaseLookup($app['db'], $app['config']->get('form-datalayer.connection'), $app['log']));
-        $this->app->scoped(FormDatalayer::class, fn ($app) => new FormDatalayer($app['config'], $app['request'], $app['auth'], $app->make(Lookup::class), $app['log']));
+        $this->app->scoped(FormDatalayer::class, fn ($app) => new FormDatalayer($app['config'], $app['request'], $app['auth'], $app->make(Lookup::class), $app['log'], $app['router']));
+        RoutePages::register();
         // One FormDatalayer per request, also when a process handles several (tests, Octane)
         $this->app->rebinding('request', function ($app) {
             $app->forgetInstance(FormDatalayer::class);
@@ -52,6 +53,21 @@ final class FormDatalayerServiceProvider extends ServiceProvider
                 ->middleware((array) $config->get('form-datalayer.screen.middleware'))
                 ->group(__DIR__.'/../routes/screen.php');
         }
+
+        // The HTTP kernel syncs its groups to the router on every request, so add it to the kernel's group.
+        // Apps without a web group (API only) get no automatic complete
+        $kernel = $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
+        if ($kernel instanceof \Illuminate\Foundation\Http\Kernel) {
+            if (isset($kernel->getMiddlewareGroups()['web'])) {
+                $kernel->appendMiddlewareToGroup('web', CompleteOnRedirect::class);
+            }
+        } elseif ($this->app['router']->hasMiddlewareGroup('web')) {
+            $this->app['router']->pushMiddlewareToGroup('web', CompleteOnRedirect::class);
+        }
+        // The router prepares the action's response first; a route middleware's own redirect never reaches it
+        $this->app['events']->listen(\Illuminate\Routing\Events\ResponsePrepared::class, function ($event): void {
+            $event->request->attributes->set(CompleteOnRedirect::RAN, true);
+        });
 
         if ($this->app->runningInConsole()) {
             $this->commands([CheckCommand::class]);

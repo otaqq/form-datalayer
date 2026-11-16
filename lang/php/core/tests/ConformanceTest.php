@@ -9,6 +9,7 @@ use Otaqq\FormDatalayer\Catalog;
 use Otaqq\FormDatalayer\Exception\InvalidCatalog;
 use Otaqq\FormDatalayer\Names;
 use Otaqq\FormDatalayer\Output;
+use Otaqq\FormDatalayer\Page;
 use Otaqq\FormDatalayer\Param;
 use Otaqq\FormDatalayer\Pusher;
 use Otaqq\FormDatalayer\Settings;
@@ -48,7 +49,19 @@ final class ConformanceTest extends TestCase
             $this->expectException(InvalidCatalog::class);
         }
         $catalog = Catalog::fromArray($case['catalog']);
+        if (isset($case['routes'])) {
+            $catalog = $catalog->withPages(array_map(fn (array $r) => new Page($r['page'], $r['form'], $r['step'], $r['mode'] ?? null), $case['routes']));
+        }
 
+        foreach ($case['steps'] ?? [] as $form => $steps) {
+            $this->assertSame($steps, $catalog->form($form)->stepNames(), $form);
+        }
+        foreach ($case['groups'] ?? [] as $form => $group) {
+            $this->assertSame($group, $catalog->form($form)->group(), $form);
+        }
+        foreach ($case['labels'] ?? [] as $form => $label) {
+            $this->assertSame($label, $catalog->form($form)->label, $form);
+        }
         foreach ($case['event_names'] ?? [] as $form => $names) {
             $actual = [];
             foreach ($catalog->form($form)->stepNames() as $step) {
@@ -91,10 +104,11 @@ final class ConformanceTest extends TestCase
                 $param[$field] = $case[$field];
             }
         }
-        $catalog = Catalog::fromArray(['version' => 1, 'forms' => ['f' => ['label' => 'F', 'steps' => ['view' => []], 'params' => ['p' => [...$param, 'default' => true]]]]]);
+        $catalog = Catalog::fromArray(['version' => 1, 'forms' => ['f' => ['label' => 'F', 'params' => ['p' => [...$param, 'default' => true]]]]]);
         $logger = new TestLogger;
+        $settings = Settings::fromArray(['version' => 1, 'forms' => ['f' => ['enabled' => true]]]);
 
-        $push = (new Pusher($catalog, Settings::empty(), new ArrayLookup($lookups), $logger))->push('f', 'view', $context);
+        $push = (new Pusher($catalog, $settings, new ArrayLookup($lookups), $logger))->push('f', 'input', $context);
 
         $this->assertSame($case['value'], $push['p'] ?? null);
         $this->assertSame($case['warning'] ?? false, $logger->of('warning') !== []);

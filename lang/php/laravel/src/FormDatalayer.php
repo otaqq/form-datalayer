@@ -7,6 +7,7 @@ namespace Otaqq\FormDatalayer\Laravel;
 use Illuminate\Contracts\Auth\Factory as Auth;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ViewErrorBag;
 use Otaqq\FormDatalayer\Catalog;
@@ -46,17 +47,40 @@ final class FormDatalayer
 
     private bool $pagePushed = false;
 
+    private ?string $mode = null;
+
     public function __construct(
         private readonly Config $config,
         private readonly Request $request,
         private readonly Auth $auth,
         private readonly Lookup $lookup,
         private readonly LoggerInterface $logger,
+        private readonly ?Router $router = null,
     ) {}
 
+    /**
+     * The catalog with the pages of the routes (`->dataLayer()`).
+     */
     public function catalog(): Catalog
     {
-        return $this->catalog ??= Catalog::fromFile((string) $this->config->get('form-datalayer.catalog'));
+        if ($this->catalog === null) {
+            $catalog = Catalog::fromFile((string) $this->config->get('form-datalayer.catalog'));
+            $this->catalog = $this->router === null ? $catalog : $catalog->withPages(RoutePages::all($this->router));
+        }
+
+        return $this->catalog;
+    }
+
+    /**
+     * Sets the mode (`create` or `edit`) of the `complete` pushed after this request's redirect, or reads it.
+     */
+    public function mode(?string $mode = null): ?string
+    {
+        if ($mode !== null) {
+            $this->mode = $mode;
+        }
+
+        return $this->mode;
     }
 
     public function settings(): Settings
@@ -190,7 +214,7 @@ final class FormDatalayer
     /**
      * The containers the app declares: name → label and default id (config `containers`).
      *
-     * @return array<string, array{label: string, default: string}>
+     * @return array<string, array{label: string, default: string, follows: string|null}>
      */
     public function containers(): array
     {
@@ -201,6 +225,7 @@ final class FormDatalayer
             $containers[(string) $name] = [
                 'label' => (string) ($container['label'] ?? $name),
                 'default' => (string) ($container['default'] ?? ''),
+                'follows' => is_string($container['follows'] ?? null) ? $container['follows'] : null,
             ];
         }
 
@@ -235,15 +260,15 @@ final class FormDatalayer
      */
     private function pagePush(): ?array
     {
-        $name = $this->request->route()?->getName();
-        $page = $name === null ? null : $this->catalog()->page($name);
+        $route = $this->request->route();
+        $page = $route instanceof \Illuminate\Routing\Route ? $this->catalog()->page(RoutePages::id($route)) : null;
         if ($page === null) {
             return null;
         }
         $error = $page->step === 'input' && $this->hasErrors();
         $input = $error ? (array) $this->request->old() : $this->request->all();
 
-        return $this->pusher()->push($page->form, $error ? 'error' : $page->step, ['input' => $input] + $this->baseContext(), $page->mode);
+        return $this->pusher()->push($page->form, $error ? 'error' : $page->step, ['input' => $input] + $this->baseContext(), $page->mode ?? $this->mode);
     }
 
     /**

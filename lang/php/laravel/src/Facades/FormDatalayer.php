@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Facade;
  * @method static list<array<string, mixed>> pushes()
  * @method static string head(string $container = 'default')
  * @method static string body(string $container = 'default')
+ * @method static string|null mode(?string $mode = null)
+ * @method static \Otaqq\FormDatalayer\Catalog catalog()
+ * @method static \Otaqq\FormDatalayer\Settings settings()
+ * @method static array<string, array{label: string, default: string, follows: string|null}> containers()
  *
  * @see \Otaqq\FormDatalayer\Laravel\FormDatalayer
  */

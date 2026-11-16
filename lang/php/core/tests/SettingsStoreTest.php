@@ -101,7 +101,7 @@ final class SettingsStoreTest extends TestCase
             $store->save(['front.gone' => ['enabled' => false], 'front.entry' => ['steps' => ['confirm' => ['event' => 'x'], 'complete' => ['params' => ['gone' => true]]]]], 0, 'a');
             $this->fail('Not refused');
         } catch (InvalidSettings $e) {
-            $this->assertSame(['unknown form: front.gone', 'unknown step: front.entry.confirm', 'unknown param: front.entry.complete.gone'], $e->errors);
+            $this->assertSame(['unknown form: front.gone', 'unknown param: front.entry.complete.gone'], $e->errors);
         }
         $this->assertFileDoesNotExist($this->path);
     }

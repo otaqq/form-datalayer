@@ -1,6 +1,6 @@
 # Settings
 
-The settings choose, from the catalog, what is measured: which forms are on, the event name of each step, and which parameters each step sends. They also hold the GTM container ids ([output.md](output.md#containers)). They are a JSON file **outside the repository**, like `.env` ([schema/settings.schema.json](schema/settings.schema.json)), written from the settings screen ([admin.md](admin.md)) so that changes need no deploy.
+The settings choose, from the catalog, what is measured: which forms are on (none until chosen), the event name of each step, and which parameters each step sends. They also hold the GTM container ids ([output.md](output.md#containers)). They are a JSON file **outside the repository**, like `.env` ([schema/settings.schema.json](schema/settings.schema.json)), written from the settings screen ([admin.md](admin.md)) so that changes need no deploy.
 
 The file holds data only. It is read with a JSON parser, never executed, and every name in it is checked against the catalog before anything reaches the page.
 
@@ -14,6 +14,7 @@ The file holds data only. It is read with a JSON parser, never executed, and eve
   "containers": {"front": "GTM-ABC1234", "admin": ""},
   "forms": {
     "front.entry": {
+      "enabled": true,
       "steps": {
         "complete": {"event": "entry_complete", "params": {"posting_code": true, "prefectures": true}}
       }
@@ -36,7 +37,7 @@ Form settings:
 
 | Field | Meaning |
 |---|---|
-| `enabled` | `false` stops measuring the form. Left out: `true` |
+| `enabled` | `true` measures the form. Left out: `false`: a form is not measured until someone turns it on |
 | `steps` | Step → step settings. Steps left out use the defaults |
 
 Step settings:
@@ -50,7 +51,8 @@ Step settings:
 
 Whatever the settings leave out follows the catalog:
 
-- A form is measured (`enabled: true`), unless the catalog turns it off. A form added to the catalog is therefore measured from its first deploy, with the default event names and the `default: true` parameters only.
+- A form is **not** measured until the settings turn it on (`enabled: true`). A form added to the catalog or the routes is therefore shown on the screen as new and pushes nothing until someone checks it.
+- A form turned on sends every step, with the default event names unless set. Filter steps in the tag manager (by `step`).
 - A parameter the step's `params` does not mention is sent when the catalog marks it `default: true`. The screen saves every parameter it shows as `true` or `false`, so a parameter left out is one added to the catalog after the last save: the screen marks it as new.
 
 ## Settings and the catalog over time
@@ -61,9 +63,10 @@ The catalog changes with the code; the settings are not edited when it does. Rea
 |---|---|
 | the container is no longer declared by the app | It is not used (`unknown container`) |
 | the form is no longer in the catalog | It is skipped |
-| the step is no longer in the form | It is skipped |
+| the step is not a form step (`view`, from v0.2) | It is skipped |
 | the parameter is no longer in the form | It is not sent; the rest of the step is |
 | a parameter was added to the catalog | It is not mentioned, so it follows its `default`: sent only with `default: true` |
+| a form was added | It is not mentioned, so it is off and marked as new |
 
 Each skipped name is logged as a warning (`unknown form`, `unknown step`, `unknown param`; `unknown container` by the check command and the screen), so a stale file shows up in the logs and in the check command ([admin.md](admin.md#check-command)). A renamed parameter is a removed one and a new one: choose it again.
 
@@ -71,7 +74,7 @@ Each skipped name is logged as a warning (`unknown form`, `unknown step`, `unkno
 
 | The file… | Then |
 |---|---|
-| does not exist | Empty settings (`version: 0`): everything follows the defaults |
+| does not exist | Empty settings (`version: 0`): everything follows the defaults, so nothing is pushed |
 | is not JSON, or fails the schema (a wrong type, an event name or a container id that breaks the rules) | **Nothing is pushed** and an error is logged. Pages still render |
 
 Stale names are not broken files (see above): only a file that cannot be trusted stops every push.

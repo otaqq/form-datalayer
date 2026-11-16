@@ -18,6 +18,12 @@
 - [x] Settings: `containers` (name → GTM id), checked on read and save; the app declares the names, with a default id
 - [x] Settings screen: one field per container; removed containers listed; check command reports them
 
+## v0.3: forms only, pages from routes, list and form pages
+
+- [x] Forms only (no `view` step); forms are off until turned on
+- [x] Laravel: pages from route metadata (`->dataLayer()`), `complete` pushed after a redirect without a failure, `mode()`
+- [x] Settings screen: tabs by group, a list and one page per form; containers that follow another
+
 ## Languages
 
 Each follows [spec/](../spec) and passes [conformance/](../conformance). Check that names are free before publishing.
