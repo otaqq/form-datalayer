@@ -1,0 +1,37 @@
+{
+  "context": {
+    "a": {"b": "text", "n": 12, "f": 1.5, "t": true, "z": null, "m": {"x": 1}, "l": [1, 2]},
+    "items": [
+      {"id": 1, "tags": [{"name": "x"}, {"name": "y"}]},
+      {"id": 2, "tags": [{"name": "y"}, {"name": null}]},
+      {"id": null},
+      "not a map"
+    ],
+    "long": "あいうえおかきくけこ"
+  },
+  "cases": [
+    {"from": "a.b", "value": "text"},
+    {"from": "a.n", "value": 12},
+    {"from": "a.f", "value": 1.5},
+    {"from": "a.t", "value": true},
+    {"from": "a.z", "value": null},
+    {"from": "a.missing", "value": null},
+    {"from": "a.b.deeper", "value": null},
+    {"from": "a.m", "value": null, "warning": true},
+    {"from": "a.l", "value": null, "warning": true},
+    {"from": "a.l.*", "value": "1,2"},
+    {"from": "items.*.id", "value": "1,2"},
+    {"from": "items.*.id", "join": null, "value": [1, 2]},
+    {"from": "items.*.tags.*.name", "value": "x,y"},
+    {"from": "items.*.tags.*.name", "join": " | ", "value": "x | y"},
+    {"from": "items.*.missing", "value": null},
+    {"from": "a.*", "value": null},
+    {"from": "long", "value": "あいうえおかきくけこ"},
+    {"from": "long", "max_length": 3, "value": "あいう"},
+    {"from": "items.*.tags.*.name", "max_length": 2, "value": "x,"},
+    {"from": "items.*.id", "lookup": {"table": "items", "key": "id", "column": "label"}, "value": "one"}
+  ],
+  "lookups": {
+    "items": [{"id": 1, "label": "one"}]
+  }
+}

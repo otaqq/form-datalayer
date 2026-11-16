@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/otaqq/form-datalayer/main/spec/schema/catalog.schema.json",
+  "title": "form-datalayer catalog",
+  "description": "The forms and pages an app can measure, and the parameters each may send. See spec/catalog.md.",
+  "type": "object",
+  "required": ["version", "forms"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {"type": "string"},
+    "version": {"const": 1},
+    "forms": {
+      "type": "object",
+      "propertyNames": {"$ref": "#/$defs/formKey"},
+      "additionalProperties": {"$ref": "#/$defs/form"}
+    }
+  },
+  "$defs": {
+    "formKey": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$"
+    },
+    "paramName": {
+      "type": "string",
+      "maxLength": 40,
+      "pattern": "^[A-Za-z][A-Za-z0-9_]*$",
+      "not": {
+        "anyOf": [
+          {"pattern": "^(?:google_|ga_|firebase_)"},
+          {"enum": ["event", "form", "step", "mode"]}
+        ]
+      }
+    },
+    "identifier": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"},
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["page"],
+        "additionalProperties": false,
+        "properties": {
+          "page": {"type": "string", "minLength": 1, "maxLength": 200},
+          "mode": {"enum": ["create", "edit"]}
+        }
+      }
+    },
+    "form": {
+      "type": "object",
+      "required": ["label", "steps"],
+      "additionalProperties": false,
+      "properties": {
+        "label": {"type": "string", "minLength": 1},
+        "enabled": {"type": "boolean"},
+        "steps": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": ["input"],
+              "additionalProperties": false,
+              "properties": {
+                "input": {"$ref": "#/$defs/pages"},
+                "confirm": {"$ref": "#/$defs/pages"},
+                "complete": {"$ref": "#/$defs/pages"}
+              }
+            },
+            {
+              "type": "object",
+              "required": ["view"],
+              "additionalProperties": false,
+              "properties": {
+                "view": {"$ref": "#/$defs/pages"}
+              }
+            }
+          ]
+        },
+        "params": {
+          "type": "object",
+          "propertyNames": {"$ref": "#/$defs/paramName"},
+          "additionalProperties": {"$ref": "#/$defs/param"}
+        }
+      }
+    },
+    "param": {
+      "type": "object",
+      "required": ["label", "from"],
+      "additionalProperties": false,
+      "properties": {
+        "label": {"type": "string", "minLength": 1},
+        "from": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_]+(?:\\.(?:[A-Za-z0-9_]+|\\*))*$"
+        },
+        "lookup": {
+          "type": "object",
+          "required": ["table", "key", "column"],
+          "additionalProperties": false,
+          "properties": {
+            "table": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)?$"},
+            "key": {"$ref": "#/$defs/identifier"},
+            "column": {"$ref": "#/$defs/identifier"}
+          }
+        },
+        "join": {"type": ["string", "null"]},
+        "max_length": {"type": ["integer", "null"], "minimum": 1},
+        "default": {"type": "boolean"}
+      }
+    }
+  }
+}

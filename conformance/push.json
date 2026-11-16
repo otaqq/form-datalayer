@@ -1,0 +1,151 @@
+{
+  "catalog": {
+    "version": 1,
+    "forms": {
+      "front.entry": {
+        "label": "Job application",
+        "steps": {
+          "input": [{"page": "front.entries.create"}],
+          "confirm": [{"page": "front.entries.confirm"}],
+          "complete": [{"page": "front.entries.complete"}]
+        },
+        "params": {
+          "posting_code": {"label": "Posting code", "from": "posting.code", "default": true},
+          "prefectures": {
+            "label": "Prefectures",
+            "from": "posting.locations.*.prefecture_id",
+            "lookup": {"table": "prefectures", "key": "id", "column": "name"}
+          },
+          "occupation_ids": {"label": "Occupation ids", "from": "posting.occupations.*.id", "join": null},
+          "title": {"label": "Title", "from": "posting.title", "max_length": 5},
+          "is_new": {"label": "New posting", "from": "posting.is_new"}
+        }
+      },
+      "admin.job-posting": {
+        "label": "Job posting",
+        "steps": {
+          "input": [{"page": "admin.job-postings.create", "mode": "create"}, {"page": "admin.job-postings.edit", "mode": "edit"}],
+          "confirm": [{"page": "admin.job-postings.confirm"}],
+          "complete": []
+        },
+        "params": {
+          "role": {"label": "Role", "from": "user.role"}
+        }
+      },
+      "front.job-view": {
+        "label": "Job shown",
+        "steps": {"view": [{"page": "front.jobs.show"}]},
+        "params": {
+          "posting_code": {"label": "Posting code", "from": "posting.code", "default": true}
+        }
+      },
+      "front.job-search": {
+        "label": "Job search results",
+        "enabled": false,
+        "steps": {"view": [{"page": "front.jobs.index"}]}
+      }
+    }
+  },
+  "lookups": {
+    "prefectures": [
+      {"id": 13, "name": "Tokyo"},
+      {"id": 27, "name": "Osaka"}
+    ]
+  },
+  "context": {
+    "posting": {
+      "code": "241116ab",
+      "title": "Warehouse staff",
+      "is_new": true,
+      "locations": [{"prefecture_id": 13}, {"prefecture_id": 27}, {"prefecture_id": 13}, {"prefecture_id": 99}, {"label": "no prefecture"}],
+      "occupations": [{"id": 3}, {"id": 5}]
+    },
+    "user": {"role": "agency_staff"}
+  },
+  "cases": [
+    {
+      "name": "defaults: default name and the default: true parameters only",
+      "settings": null,
+      "form": "front.entry", "step": "confirm",
+      "push": {"event": "front_entry_confirm", "form": "front.entry", "step": "confirm", "posting_code": "241116ab"}
+    },
+    {
+      "name": "chosen parameters in catalog order; lookup, repeats dropped, missing rows dropped, joined; a list kept; cut to max_length",
+      "settings": {"version": 1, "forms": {"front.entry": {"steps": {"complete": {"params": {"is_new": true, "title": true, "occupation_ids": true, "prefectures": true, "posting_code": true}}}}}},
+      "form": "front.entry", "step": "complete",
+      "push": {"event": "front_entry_complete", "form": "front.entry", "step": "complete", "posting_code": "241116ab", "prefectures": "Tokyo,Osaka", "occupation_ids": [3, 5], "title": "Wareh", "is_new": true}
+    },
+    {
+      "name": "a parameter saved as false is not sent, even with default: true",
+      "settings": {"version": 1, "forms": {"front.entry": {"steps": {"confirm": {"params": {"posting_code": false}}}}}},
+      "form": "front.entry", "step": "confirm",
+      "push": {"event": "front_entry_confirm", "form": "front.entry", "step": "confirm"}
+    },
+    {
+      "name": "a parameter not mentioned follows its default (it was added after the last save)",
+      "settings": {"version": 1, "forms": {"front.entry": {"steps": {"confirm": {"params": {"title": false}}}}}},
+      "form": "front.entry", "step": "confirm",
+      "push": {"event": "front_entry_confirm", "form": "front.entry", "step": "confirm", "posting_code": "241116ab"}
+    },
+    {
+      "name": "event name from the settings",
+      "settings": {"version": 1, "forms": {"front.entry": {"steps": {"complete": {"event": "entry_complete"}}}}},
+      "form": "front.entry", "step": "complete",
+      "push": {"event": "entry_complete", "form": "front.entry", "step": "complete", "posting_code": "241116ab"}
+    },
+    {
+      "name": "error has the default name of its own and the parameters of its own",
+      "settings": null,
+      "form": "front.entry", "step": "error",
+      "push": {"event": "front_entry_error", "form": "front.entry", "step": "error", "posting_code": "241116ab"}
+    },
+    {
+      "name": "mode is sent when known",
+      "settings": {"version": 1, "forms": {"admin.job-posting": {"steps": {"complete": {"params": {"role": true}}}}}},
+      "form": "admin.job-posting", "step": "complete", "mode": "edit",
+      "push": {"event": "admin_job_posting_complete", "form": "admin.job-posting", "step": "complete", "mode": "edit", "role": "agency_staff"}
+    },
+    {
+      "name": "a page: view, named after the key",
+      "settings": null,
+      "form": "front.job-view", "step": "view",
+      "push": {"event": "front_job_view", "form": "front.job-view", "step": "view", "posting_code": "241116ab"}
+    },
+    {
+      "name": "turned off in the settings",
+      "settings": {"version": 1, "forms": {"front.entry": {"enabled": false}}},
+      "form": "front.entry", "step": "confirm",
+      "push": null
+    },
+    {
+      "name": "turned off in the catalog, whatever the settings say",
+      "settings": {"version": 1, "forms": {"front.job-search": {"enabled": true}}},
+      "form": "front.job-search", "step": "view",
+      "push": null
+    },
+    {
+      "name": "stale names are skipped with warnings; the rest is pushed",
+      "settings": {"version": 1, "forms": {
+        "front.gone": {"enabled": false},
+        "front.entry": {"steps": {"confirm": {"params": {"posting_code": true, "gone": true}}, "view": {"event": "nope"}}}
+      }},
+      "form": "front.entry", "step": "confirm",
+      "push": {"event": "front_entry_confirm", "form": "front.entry", "step": "confirm", "posting_code": "241116ab"},
+      "warnings": ["unknown form: front.gone", "unknown step: front.entry.view", "unknown param: front.entry.confirm.gone"]
+    },
+    {
+      "name": "a broken settings file stops every push",
+      "settings": "{not json",
+      "form": "front.entry", "step": "confirm",
+      "push": null,
+      "error": "broken settings"
+    },
+    {
+      "name": "a settings file that fails the schema stops every push",
+      "settings": {"version": 1, "forms": {"front.entry": {"steps": {"confirm": {"event": "has space"}}}}},
+      "form": "front.entry", "step": "confirm",
+      "push": null,
+      "error": "broken settings"
+    }
+  ]
+}
