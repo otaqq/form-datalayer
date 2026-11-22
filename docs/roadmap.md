@@ -21,7 +21,7 @@
 ## v0.3: forms only, pages from routes, list and form pages
 
 - [x] Forms only (no `view` step); forms are off until turned on
-- [x] Laravel: pages from route metadata (`->dataLayer()`), `complete` pushed after a redirect without a failure, `mode()`
+- [x] Laravel: pages from route metadata (`->dataLayer()`), `complete` pushed after a submitting route's redirect without a failure, `mode()`
 - [x] Settings screen: tabs by group, a list and one page per form; containers that follow another
 
 ## Languages

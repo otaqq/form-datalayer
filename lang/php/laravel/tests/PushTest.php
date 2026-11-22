@@ -7,6 +7,7 @@ namespace Otaqq\FormDatalayer\Laravel\Tests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Otaqq\FormDatalayer\Laravel\Facades\FormDatalayer;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 final class PushTest extends TestCase
 {
@@ -25,6 +26,11 @@ final class PushTest extends TestCase
 
                 return view('page');
             })->name('front.entries.confirm')->dataLayer('front.entry', 'confirm');
+            // The final submit saves and redirects (Post/Redirect/Get)
+            Route::post('entry', fn () => redirect('/terms'))->dataLayer('front.entry', 'complete');
+            // A complete page that sends visitors who did not just submit (a reload, a bookmark, a bot) elsewhere
+            Route::get('entry/complete', fn (Request $request) => $request->session()->has('entered') ? view('page') : redirect('/terms'))
+                ->dataLayer('front.entry', 'complete');
             Route::get('inquiry', fn () => view('page'))->name('front.inquiries.create');
             Route::get('terms', fn () => view('page'));
             Route::get('admin/job-postings/{id}/edit', fn () => view('page'))->dataLayer('admin.job-posting', 'input', mode: 'edit');
@@ -36,6 +42,8 @@ final class PushTest extends TestCase
 
                 return redirect('/admin/job-postings');
             })->dataLayer('admin.job-posting', 'complete');
+            Route::match(['PATCH', 'DELETE'], 'admin/job-postings/{id}/state', fn () => redirect('/admin/job-postings'))
+                ->dataLayer('admin.job-posting', 'complete');
             Route::get('admin/job-postings', fn () => view('page'));
             // Unnamed routes in a named group get the group prefix as name
             Route::name('admin.')->group(function () {
@@ -117,6 +125,64 @@ final class PushTest extends TestCase
         $this->assertSame([], self::pushesIn($this->get('/admin/job-postings')->getContent()));
     }
 
+    public function test_a_post_complete_route_that_redirects_pushes_complete_on_the_next_page(): void
+    {
+        $this->saveSettings(['front.entry' => ['enabled' => true]]);
+
+        $this->post('/entry')->assertRedirect('/terms');
+
+        $this->assertSame([['event' => 'front_entry_complete', 'form' => 'front.entry', 'step' => 'complete']], self::pushesIn($this->get('/terms')->getContent()));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function unsafeMethods(): iterable
+    {
+        yield 'PATCH' => ['PATCH'];
+        yield 'DELETE' => ['DELETE'];
+    }
+
+    #[DataProvider('unsafeMethods')]
+    public function test_other_unsafe_complete_routes_that_redirect_push_complete_on_the_next_page(string $method): void
+    {
+        $this->saveSettings(['admin.job-posting' => ['enabled' => true]]);
+        $this->actingAs($this->user('agency_staff'));
+
+        $this->call($method, '/admin/job-postings/1/state')->assertRedirect('/admin/job-postings');
+
+        $this->assertSame(['complete'], array_column(self::pushesIn($this->get('/admin/job-postings')->getContent()), 'step'));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function safeMethods(): iterable
+    {
+        yield 'GET' => ['GET'];
+        yield 'HEAD' => ['HEAD'];
+    }
+
+    #[DataProvider('safeMethods')]
+    public function test_a_complete_page_that_redirects_is_not_a_complete(string $method): void
+    {
+        $this->saveSettings(['front.entry' => ['enabled' => true]]);
+
+        $this->call($method, '/entry/complete')->assertRedirect('/terms');
+
+        $this->assertSame([], self::pushesIn($this->get('/terms')->getContent()));
+    }
+
+    public function test_a_complete_page_that_renders_pushes_complete_once(): void
+    {
+        $this->saveSettings(['front.entry' => ['enabled' => true]]);
+
+        $html = $this->withSession(['entered' => true])->get('/entry/complete')->assertOk()->getContent();
+
+        $this->assertSame([['event' => 'front_entry_complete', 'form' => 'front.entry', 'step' => 'complete']], self::pushesIn($html));
+        $this->assertSame([], self::pushesIn($this->get('/terms')->getContent()));
+    }
+
     public function test_a_complete_route_that_flashes_a_failure_pushes_nothing(): void
     {
         $this->saveSettings(['admin.job-posting' => ['enabled' => true]]);
@@ -195,7 +261,7 @@ final class PushTest extends TestCase
     {
         $catalog = app(\Otaqq\FormDatalayer\Laravel\FormDatalayer::class)->catalog();
 
-        $this->assertSame(['input', 'confirm', 'error'], $catalog->form('front.entry')->stepNames());
+        $this->assertSame(['input', 'confirm', 'complete', 'error'], $catalog->form('front.entry')->stepNames());
         $this->assertSame(['input', 'complete', 'error'], $catalog->form('admin.job-posting')->stepNames());
         $this->assertSame('complete', $catalog->page('PUT admin/job-postings/{id}')?->step);
         $this->assertSame(['admin.a', 'admin.b'], [$catalog->page('POST admin/a/confirm')?->form, $catalog->page('POST admin/b/confirm')?->form]);

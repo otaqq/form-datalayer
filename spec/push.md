@@ -26,7 +26,18 @@ Route::post('prefectures/confirm', …)->dataLayer('admin.prefecture', 'complete
 
 The page id of a route is its name, or its method, domain and URI when it has none (Laravel: a name that is only a group prefix, ending with `.`, is none).
 
-A route marked `complete` handles the final submit. When its own action answers with a redirect (a redirect from a route middleware, such as a password confirmation, does not count) and has not flashed a failure (validation errors, or the flash keys the app lists as failures), the adapter pushes `complete` on the next page, with the context the request gave (`with()`) and the mode the app set for it, if any (Laravel: `FormDatalayer::mode('edit')`). The app writes nothing else for the step. A route marked `complete` that answers with a page (no redirect) pushes `complete` on that page.
+A route marked `complete` is either the route that handles the final submit or the complete page shown after it:
+
+- **The submitting route** (a method that is not safe: POST, PUT, PATCH, DELETE). When its own action answers with a redirect (a redirect from a route middleware, such as a password confirmation, does not count) and has not flashed a failure (validation errors, or the flash keys the app lists as failures), the adapter pushes `complete` on the next page, with the context the request gave (`with()`) and the mode the app set for it, if any (Laravel: `FormDatalayer::mode('edit')`). The app writes nothing else for the step.
+- **A complete page** (GET or HEAD, the safe methods). It pushes `complete` only when it renders. Its redirect pushes nothing: a complete page that redirects could not be shown (a reload, a bookmark or a bot opened it outside the flow, and the app sent the visitor elsewhere), so it is no completion. An action that completes something on a GET and then redirects (a payment return URL, an email verification link) flashes `complete` itself (Laravel: `FormDatalayer::flash($form, 'complete', …)`).
+
+A route that accepts several methods (Laravel: `Route::match`, `Route::any`) is decided by the method of each request.
+
+Any route marked `complete` that answers with a page (no redirect) pushes `complete` on that page.
+
+Mark the submitting route rather than the complete page: with Post/Redirect/Get, mark the POST that saves and redirects, so a reload of the complete page never pushes. Mark one of the two, not both, or `complete` is pushed twice.
+
+A failed submit that redirects with a flash key of its own (an expired token sent back with `notice`) must be listed as a failure; otherwise its redirect counts as a completion.
 
 ## Pushing a step
 

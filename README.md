@@ -34,7 +34,8 @@ Mark the pages of each form on its routes. Adding or removing a route adds or re
 ```php
 Route::get('entry/{posting}', [EntryController::class, 'create'])->name('entries.create')->dataLayer('front.entry', 'input');
 Route::post('entry/{posting}/confirm', [EntryController::class, 'confirm'])->dataLayer('front.entry', 'confirm');
-Route::get('entry/{posting}/complete', [EntryController::class, 'complete'])->dataLayer('front.entry', 'complete');
+Route::post('entry/{posting}', [EntryController::class, 'store'])->dataLayer('front.entry', 'complete');   // saves, redirects to the complete page
+Route::get('entry/{posting}/complete', [EntryController::class, 'complete']);
 
 Route::get('prefectures/create', …)->dataLayer('admin.prefecture', 'input', mode: 'create');
 Route::get('prefectures/{id}/edit', …)->dataLayer('admin.prefecture', 'input', mode: 'edit');
@@ -42,7 +43,9 @@ Route::post('prefectures/confirm', …)->dataLayer('admin.prefecture', 'complete
 ```
 
 - An `input` page that comes back with validation errors pushes `error`.
-- A `complete` route that redirects pushes `complete` on the next page, unless it flashed validation errors or one of the flash keys in `failures` (`'failures' => ['error']`). Set its mode with `FormDatalayer::mode('edit')`.
+- A `complete` route that submits (POST, PUT, PATCH, DELETE) and redirects pushes `complete` on the next page, unless it flashed validation errors or one of the flash keys in `failures` (`'failures' => ['error']`). Set its mode with `FormDatalayer::mode('edit')`.
+- List in `failures` every flash key a failed submit redirects with (an expired token sent back with `notice`): any other redirect of a submitting `complete` route counts as a completion.
+- A GET route marked `complete` (a complete page) pushes `complete` only when it renders. When it redirects (a reload, a bookmark or a bot opened it outside the flow) it pushes nothing. Prefer marking the submitting route, as above, so a reload of the complete page never pushes; mark one of the two, not both.
 
 Write the labels and the values each form may send in `form-datalayer.json` at the root of the app ([spec/catalog.md](spec/catalog.md)). Only these values can ever reach the page:
 
@@ -98,11 +101,15 @@ Gate::define('form-datalayer.manage', fn ($user) => in_array($user->role, ['syst
 
 The settings are saved to `storage/app/private/form-datalayer.json` (`FORM_DATALAYER_SETTINGS`): keep it on storage that survives deploys. Publish the views (`--tag=form-datalayer-views`: `index` and `form`) to put the screen in your layout. After a deploy, `php artisan form-datalayer:check` lists new forms and parameters, and settings that name what is gone.
 
+## Upgrading from v0.3
+
+- **A GET route marked `complete` no longer pushes `complete` when it redirects.** Its redirect means the complete page could not be shown (a reload, a bookmark or a bot), so it was counted wrongly. If the complete page comes after a POST, move the mark to that POST. If a GET action completes something itself and then redirects (a payment return URL, an email verification link, an OAuth callback), call `FormDatalayer::flash($form, 'complete', …)` in the action.
+
 ## Upgrading from v0.2
 
 - **Forms are off until turned on.** Forms the saved settings do not turn on (`"enabled": true`) stop pushing. Check them on the list and save.
 - Pages that are not forms (`view`) are gone: drop them from the catalog. Their saved settings are listed as removed and dropped on the next save.
-- Move `steps` from the catalog to the routes (`->dataLayer()`); a page may not be in both. Calls to `FormDatalayer::flash(…, 'complete', …)` can become `->dataLayer(…, 'complete')` on the route that redirects.
+- Move `steps` from the catalog to the routes (`->dataLayer()`); a page may not be in both. Calls to `FormDatalayer::flash(…, 'complete', …)` can become `->dataLayer(…, 'complete')` on the submitting route (POST, PUT, PATCH, DELETE) that redirects; on a GET route keep `flash()`.
 - The settings view is now two views, `index` and `form`: publish them again if you had published `settings`.
 
 ## License

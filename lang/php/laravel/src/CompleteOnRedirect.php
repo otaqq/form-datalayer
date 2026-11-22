@@ -13,7 +13,10 @@ use Symfony\Component\HttpFoundation\Response;
  * Pushes `complete` on the next page when a route marked `complete` redirects without a failure
  * (spec/push.md#pages-from-routes). Failures are validation errors and the flash keys in
  * config form-datalayer.failures. Only the route's own response counts: a redirect from a route
- * middleware (password confirmation, …) runs no action and pushes nothing. Added to the web group.
+ * middleware (password confirmation, …) runs no action and pushes nothing. Only the submitting
+ * route counts: a safe method (GET, HEAD) is a complete page, which pushes when it renders; its
+ * redirect means the page was not shown (a reload, a bookmark, a bot) and pushes nothing.
+ * Added to the web group.
  */
 final class CompleteOnRedirect
 {
@@ -28,7 +31,7 @@ final class CompleteOnRedirect
 
         $route = $request->route();
         $meta = $route instanceof \Illuminate\Routing\Route ? RoutePages::meta($route) : null;
-        if ($meta === null || $meta['step'] !== 'complete' || ! $response->isRedirection() || ! $request->hasSession()
+        if ($meta === null || $meta['step'] !== 'complete' || $request->isMethodSafe() || ! $response->isRedirection() || ! $request->hasSession()
             || $request->attributes->get(self::RAN) !== true) {
             return $response;
         }
